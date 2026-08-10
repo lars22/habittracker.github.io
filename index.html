@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0" />
 <title>Habit Tracker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -28,8 +28,13 @@
 
   * { box-sizing: border-box; }
 
-  body {
+  html, body {
     margin: 0;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  body {
     font-family: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
     background: var(--bg);
     color: var(--ink);
@@ -55,6 +60,10 @@
     max-width: 980px;
     margin: 0 auto;
     padding: 40px 24px 80px;
+    padding-left: max(24px, env(safe-area-inset-left));
+    padding-right: max(24px, env(safe-area-inset-right));
+    padding-bottom: max(80px, calc(env(safe-area-inset-bottom) + 40px));
+    overflow-x: hidden;
   }
 
   header.top {
@@ -63,6 +72,7 @@
     justify-content: space-between;
     margin-bottom: 32px;
     gap: 16px;
+    flex-wrap: wrap;
   }
 
   header.top h1 {
@@ -149,6 +159,7 @@
   .quick-check {
     width: 44px;
     height: 44px;
+    min-width: 44px;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -176,7 +187,7 @@
     color: var(--card-color);
   }
 
-  .habit-card .meta { flex: 1; min-width: 0; }
+  .habit-card .meta { flex: 1; min-width: 0; overflow: hidden; }
 
   .habit-card .name {
     font-weight: 800;
@@ -193,13 +204,21 @@
     gap: 10px;
     align-items: flex-end;
     margin-top: 4px;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding-bottom: 1px;
   }
+  .dot-trail::-webkit-scrollbar { display: none; }
 
   .dot-col {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 5px;
+    flex-shrink: 0;
   }
 
   .dot-trail .dot {
@@ -447,12 +466,12 @@
 
   .swatch-row {
     display: flex;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     align-items: center;
-    justify-content: space-between;
-    gap: 6px;
+    justify-content: center;
+    gap: 10px 8px;
     margin-bottom: 22px;
-    padding: 4px 2px;
+    padding: 5px 6px;
   }
 
   .swatch-wrap {
@@ -481,11 +500,12 @@
 
   .icon-grid {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
     gap: 10px;
     margin-bottom: 24px;
-    max-height: 220px;
+    max-height: 260px;
     overflow-y: auto;
+    overflow-x: hidden;
     padding: 2px;
   }
   .icon-choice {
@@ -525,12 +545,91 @@
   .btn-ghost:hover { background: var(--surface-soft); color: var(--ink); }
 
   .confirm-text { font-size: 14px; color: var(--ink-soft); margin-bottom: 22px; line-height: 1.5; }
+
+  .loading-state {
+    text-align: center;
+    color: var(--ink-soft);
+    font-size: 15px;
+    font-weight: 600;
+    padding: 60px 20px;
+  }
+  .loading-state.error { color: #FF9A8C; }
+
+  /* ===================== Mobile (iPhone) ===================== */
+  @media (max-width: 600px) {
+    .app {
+      padding: 24px 14px 40px;
+      padding-left: max(14px, env(safe-area-inset-left));
+      padding-right: max(14px, env(safe-area-inset-right));
+    }
+
+    header.top { margin-bottom: 22px; }
+    header.top h1 { font-size: 22px; }
+    .btn-primary {
+      width: 100%;
+      justify-content: center;
+      padding: 13px 20px;
+    }
+
+    .habit-card {
+      padding: 14px 14px;
+      gap: 10px;
+    }
+
+    /* Drag handle relies on HTML5 DnD, which isn't usable via touch on iOS anyway */
+    .drag-handle { display: none; }
+
+    .habit-icon, .quick-check {
+      width: 38px;
+      height: 38px;
+      min-width: 38px;
+    }
+    .habit-icon .material-symbols-rounded { font-size: 19px; }
+
+    .habit-card .name { font-size: 16px; margin-bottom: 5px; }
+
+    .dot-trail { gap: 7px; }
+    .dot-trail .dot { width: 9px; height: 9px; }
+    .dot-col { gap: 4px; }
+    .dot-col .day-label { font-size: 9px; }
+    .streak-tag { font-size: 12px; margin-left: 4px; }
+
+    .detail-modal, .modal {
+      padding: 20px;
+      max-width: 100%;
+      border-radius: var(--radius-md);
+    }
+
+    .overlay { padding: 12px; padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+
+    .stat-row { gap: 8px; }
+    .stat-box { padding: 12px 6px; }
+    .stat-box .val { font-size: 18px; }
+
+    .icon-grid {
+      grid-template-columns: repeat(auto-fill, minmax(38px, 1fr));
+      gap: 8px;
+      max-height: 240px;
+    }
+
+    .swatch-wrap { width: 32px; height: 32px; }
+    .swatch { width: 22px; height: 22px; }
+  }
+
+  @media (max-width: 380px) {
+    .app { padding-left: max(10px, env(safe-area-inset-left)); padding-right: max(10px, env(safe-area-inset-right)); }
+    .habit-card { padding: 12px 10px; gap: 8px; }
+    .dot-trail { gap: 5px; }
+    .streak-tag { display: none; }
+  }
 </style>
 </head>
 <body>
 
 <div class="app" id="app"></div>
 
+<!-- sql.js: SQLite compiled to WebAssembly, runs entirely in the browser -->
+<script src="https://cdn.jsdelivr.net/npm/sql.js@1.10.2/dist/sql-wasm.js"></script>
 <script>
 (function () {
   "use strict";
@@ -566,13 +665,53 @@
     "savings",
     "cleaning_services",
     "brush",
-    "local_fire_department"
+    "local_fire_department",
+    "self_improvement",
+    "spa",
+    "nightlight",
+    "alarm",
+    "timer",
+    "checklist",
+    "task_alt",
+    "school",
+    "work",
+    "code",
+    "music_note",
+    "headphones",
+    "piano",
+    "palette",
+    "photo_camera",
+    "hiking",
+    "pool",
+    "sports_soccer",
+    "sports_basketball",
+    "directions_walk",
+    "pets",
+    "child_care",
+    "volunteer_activism",
+    "park",
+    "local_florist",
+    "icecream",
+    "monitor_heart",
+    "medication",
+    "shower",
+    "account_balance"
   ];
 
   const SHORT_WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-  const STORAGE_KEY = "habit-tracker-data-v5";
+
+  // sql.js loads the wasm binary from this CDN folder at runtime
+  const SQL_WASM_CDN = "https://cdn.jsdelivr.net/npm/sql.js@1.10.2/dist/";
+  // IndexedDB is only used to store the exported SQLite file bytes between visits
+  const IDB_NAME = "habit-tracker-sqlite";
+  const IDB_STORE = "files";
+  const IDB_KEY = "db";
+  // one-time migration source from the previous localStorage-based version
+  const LEGACY_STORAGE_KEY = "habit-tracker-data-v5";
+
+  let db = null; // the sql.js Database instance
 
   let state = {
     habits: [],       
@@ -583,6 +722,7 @@
     editingHabit: null, 
     confirmDeleteId: null,
     loaded: false,
+    initError: null,
     burstKey: null
   };
 
@@ -599,17 +739,124 @@
   function addMonths(d, n) { return new Date(d.getFullYear(), d.getMonth() + n, 1); }
   function isFuture(d) { return startOfDay(d) > startOfDay(new Date()); }
 
-  // ---------- Persistence ----------
-  function loadData() {
+  // ---------- IndexedDB (stores the raw SQLite file) ----------
+  function idbOpen() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(IDB_NAME, 1);
+      req.onupgradeneeded = () => { req.result.createObjectStore(IDB_STORE); };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  async function idbLoadDbFile() {
     try {
-      const savedData = localStorage.getItem(STORAGE_KEY);
-      if (savedData) {
-        const parsed = JSON.parse(savedData);
-        state.habits = parsed.habits || [];
-        state.completions = parsed.completions || {};
-      }
+      const conn = await idbOpen();
+      return await new Promise((resolve, reject) => {
+        const tx = conn.transaction(IDB_STORE, "readonly");
+        const req = tx.objectStore(IDB_STORE).get(IDB_KEY);
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = () => reject(req.error);
+      });
     } catch (e) {
-      console.error("Loading failed:", e);
+      console.error("IndexedDB read failed:", e);
+      return null;
+    }
+  }
+
+  async function idbSaveDbFile(bytes) {
+    try {
+      const conn = await idbOpen();
+      await new Promise((resolve, reject) => {
+        const tx = conn.transaction(IDB_STORE, "readwrite");
+        tx.objectStore(IDB_STORE).put(bytes, IDB_KEY);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
+    } catch (e) {
+      console.error("IndexedDB write failed:", e);
+    }
+  }
+
+  // ---------- SQLite helpers ----------
+  function dbAll(sql, params = []) {
+    const stmt = db.prepare(sql);
+    stmt.bind(params);
+    const rows = [];
+    while (stmt.step()) rows.push(stmt.getAsObject());
+    stmt.free();
+    return rows;
+  }
+
+  function ensureSchema() {
+    db.run(`
+      CREATE TABLE IF NOT EXISTS habits (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        icon TEXT NOT NULL,
+        color TEXT NOT NULL,
+        position INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS completions (
+        habit_id TEXT NOT NULL,
+        date TEXT NOT NULL,
+        PRIMARY KEY (habit_id, date)
+      );
+      CREATE INDEX IF NOT EXISTS idx_completions_habit ON completions(habit_id);
+    `);
+  }
+
+  // Imports data from the old localStorage version, once, if the new DB is still empty
+  function migrateLegacyDataIfNeeded() {
+    const count = dbAll("SELECT COUNT(*) AS c FROM habits")[0].c;
+    if (count > 0) return;
+
+    let legacy = null;
+    try {
+      const raw = localStorage.getItem(LEGACY_STORAGE_KEY);
+      if (raw) legacy = JSON.parse(raw);
+    } catch (e) { /* ignore malformed legacy data */ }
+    if (!legacy || !Array.isArray(legacy.habits) || legacy.habits.length === 0) return;
+
+    legacy.habits.forEach((h, i) => {
+      db.run("INSERT INTO habits (id, name, icon, color, position, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+        [h.id, h.name, h.icon, h.color, i, h.createdAt || new Date().toISOString()]);
+      const days = (legacy.completions && legacy.completions[h.id]) || [];
+      days.forEach(dateKey => {
+        db.run("INSERT OR IGNORE INTO completions (habit_id, date) VALUES (?, ?)", [h.id, dateKey]);
+      });
+    });
+    localStorage.removeItem(LEGACY_STORAGE_KEY);
+  }
+
+  function loadStateFromDb() {
+    const habitRows = dbAll("SELECT id, name, icon, color, created_at FROM habits ORDER BY position ASC");
+    state.habits = habitRows.map(r => ({ id: r.id, name: r.name, icon: r.icon, color: r.color, createdAt: r.created_at }));
+
+    const compRows = dbAll("SELECT habit_id, date FROM completions");
+    const map = {};
+    compRows.forEach(r => {
+      if (!map[r.habit_id]) map[r.habit_id] = [];
+      map[r.habit_id].push(r.date);
+    });
+    state.completions = map;
+  }
+
+  // ---------- Persistence ----------
+  async function loadData() {
+    try {
+      const initSqlJs = window.initSqlJs;
+      const SQLModule = await initSqlJs({ locateFile: file => SQL_WASM_CDN + file });
+      const savedBytes = await idbLoadDbFile();
+      db = savedBytes ? new SQLModule.Database(new Uint8Array(savedBytes)) : new SQLModule.Database();
+      ensureSchema();
+      migrateLegacyDataIfNeeded();
+      loadStateFromDb();
+      persist();
+    } catch (e) {
+      console.error("Database init failed:", e);
+      state.initError = "Die Datenbank konnte nicht geladen werden. Bitte prüfe deine Internetverbindung und lade die Seite neu.";
     }
 
     state.loaded = true;
@@ -617,11 +864,10 @@
   }
 
   function persist() {
+    if (!db) return;
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        habits: state.habits,
-        completions: state.completions
-      }));
+      const bytes = db.export();
+      idbSaveDbFile(bytes);
     } catch (e) {
       console.error("Saving failed:", e);
     }
@@ -682,9 +928,11 @@
     let justCompleted = false;
     if (idx >= 0) {
       list.splice(idx, 1);
+      db.run("DELETE FROM completions WHERE habit_id = ? AND date = ?", [habitId, key]);
     } else {
       list.push(key);
       justCompleted = true;
+      db.run("INSERT OR IGNORE INTO completions (habit_id, date) VALUES (?, ?)", [habitId, key]);
     }
     state.completions[habitId] = list;
     if (justCompleted) {
@@ -703,6 +951,9 @@
       color: draft.color,
       createdAt: new Date().toISOString()
     };
+    const position = state.habits.length;
+    db.run("INSERT INTO habits (id, name, icon, color, position, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+      [habit.id, habit.name, habit.icon, habit.color, position, habit.createdAt]);
     state.habits.push(habit);
     state.completions[habit.id] = [];
     persist();
@@ -714,6 +965,8 @@
     habit.name = draft.name.trim();
     habit.color = draft.color;
     habit.icon = draft.icon;
+    db.run("UPDATE habits SET name = ?, color = ?, icon = ? WHERE id = ?",
+      [habit.name, habit.color, habit.icon, habit.id]);
     persist();
   }
 
@@ -721,6 +974,8 @@
     state.habits = state.habits.filter(h => h.id !== id);
     delete state.completions[id];
     if (state.openHabitId === id) state.openHabitId = null;
+    db.run("DELETE FROM completions WHERE habit_id = ?", [id]);
+    db.run("DELETE FROM habits WHERE id = ?", [id]);
     persist();
   }
 
@@ -750,7 +1005,11 @@
   function render() {
     const app = document.getElementById("app");
     if (!state.loaded) {
-      app.innerHTML = "";
+      app.innerHTML = `<div class="loading-state">Wird geladen …</div>`;
+      return;
+    }
+    if (state.initError) {
+      app.innerHTML = `<div class="loading-state error">${esc(state.initError)}</div>`;
       return;
     }
 
@@ -910,7 +1169,9 @@
         <div class="modal">
           <h3>${isEdit ? "Edit Habit" : "New Habit"}</h3>
           <label class="field-label">Name</label>
-          <input class="name-input" id="habitNameInput" placeholder="e.g., Drink water" value="${esc(draft.name)}" autofocus />
+          <input class="name-input" id="habitTitleInput" name="habit-title" placeholder="e.g., Drink water" value="${esc(draft.name)}"
+            autocomplete="off" autocorrect="off" autocapitalize="sentences" spellcheck="false"
+            data-lpignore="true" data-1p-ignore autofocus />
 
           <label class="field-label">Choose Color</label>
           <div class="swatch-row">
@@ -942,7 +1203,7 @@
       state.modal = "add";
       state.editingHabit = { name: "", color: getNextColor(), icon: HABIT_ICONS[0] };
       render();
-      const input = document.getElementById("habitNameInput");
+      const input = document.getElementById("habitTitleInput");
       if (input) input.focus();
     });
 
@@ -992,6 +1253,7 @@
 
         const movedItem = state.habits.splice(draggedIndex, 1)[0];
         state.habits.splice(index, 0, movedItem);
+        state.habits.forEach((h, i) => db.run("UPDATE habits SET position = ? WHERE id = ?", [i, h.id]));
 
         draggedIndex = null;
         persist();
@@ -1042,7 +1304,7 @@
       state.modal = "edit";
       state.editingHabit = { id: habit.id, name: habit.name, color: habit.color, icon: habit.icon };
       render();
-      const input = document.getElementById("habitNameInput");
+      const input = document.getElementById("habitTitleInput");
       if (input) { input.focus(); input.select(); }
     });
 
@@ -1064,7 +1326,7 @@
       render();
     });
 
-    const nameInput = document.getElementById("habitNameInput");
+    const nameInput = document.getElementById("habitTitleInput");
     if (nameInput) {
       nameInput.addEventListener("input", (e) => {
         state.editingHabit.name = e.target.value;
@@ -1089,16 +1351,12 @@
       el.addEventListener("click", () => {
         state.editingHabit.color = el.getAttribute("data-color");
         render();
-        const input = document.getElementById("habitNameInput");
-        if (input) { input.focus(); input.setSelectionRange(input.value.length, input.value.length); }
       });
     });
     document.querySelectorAll("[data-icon]").forEach(el => {
       el.addEventListener("click", () => {
         state.editingHabit.icon = el.getAttribute("data-icon");
         render();
-        const input = document.getElementById("habitNameInput");
-        if (input) { input.focus(); input.setSelectionRange(input.value.length, input.value.length); }
       });
     });
     const cancelAdd = document.getElementById("cancelAdd");
