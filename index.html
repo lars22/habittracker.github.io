@@ -4,8 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>My Habits</title>
-    <!-- FontAwesome für Apple SF Symbol Entsprechungen -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --bg-main: #0F172A;
@@ -47,6 +48,9 @@
 
         header {
             padding: 16px 0 24px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         header h1 {
@@ -55,7 +59,17 @@
             letter-spacing: -0.5px;
         }
 
-        /* Empty State */
+        .auth-status-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-sub);
+            padding: 8px 12px;
+            border-radius: 12px;
+            font-size: 13px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
         .empty-state {
             display: flex;
             flex-direction: column;
@@ -78,14 +92,12 @@
             line-height: 1.4;
         }
 
-        /* Habit List */
         .habit-list {
             display: flex;
             flex-direction: column;
             gap: 14px;
         }
 
-        /* Habit Card */
         .habit-card {
             background-color: var(--bg-card);
             border-radius: 18px;
@@ -98,17 +110,6 @@
             transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease;
         }
 
-        /* Drag and Drop Styling */
-        .habit-card.dragging {
-            opacity: 0.4;
-            transform: scale(0.98);
-        }
-
-        .habit-card.drag-over {
-            border: 1.5px dashed var(--accent-primary);
-        }
-
-        /* Bouncy Button Animation Style */
         .bouncy {
             transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.25s ease;
         }
@@ -208,7 +209,6 @@
             color: #0F172A;
         }
 
-        /* FAB Button */
         .fab-container {
             position: fixed;
             bottom: 20px;
@@ -232,7 +232,6 @@
             box-shadow: 0 6px 12px rgba(99, 102, 241, 0.4);
         }
 
-        /* Modal / Sheet Overlay */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -303,7 +302,6 @@
             gap: 24px;
         }
 
-        /* Forms & Inputs */
         .form-group {
             display: flex;
             flex-direction: column;
@@ -373,7 +371,6 @@
             background: var(--accent-primary);
         }
 
-        /* Detail Modal Specifics */
         .detail-header-box {
             background: var(--bg-card);
             border-radius: 20px;
@@ -436,7 +433,6 @@
             color: var(--text-sub);
         }
 
-        /* Calendar Card */
         .calendar-box {
             background: var(--bg-card);
             border-radius: 20px;
@@ -510,7 +506,6 @@
             cursor: default;
         }
 
-        /* Single full-width delete button */
         .delete-btn-full {
             width: 100%;
             padding: 14px;
@@ -527,6 +522,18 @@
             color: #EF4444;
             margin-top: 6px;
         }
+
+        .auth-btn-full {
+            width: 100%;
+            padding: 14px;
+            border-radius: 14px;
+            border: none;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            background: linear-gradient(to right, var(--accent-primary), var(--accent-secondary));
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -534,6 +541,7 @@
     <div class="app-container">
         <header>
             <h1>My Habits</h1>
+            <button id="authBtn" class="auth-status-btn" onclick="handleAuthClick()">Login</button>
         </header>
 
         <div id="habitListContainer" class="habit-list"></div>
@@ -543,6 +551,29 @@
                 <i class="fa-solid fa-plus"></i>
                 <span>New Habit</span>
             </button>
+        </div>
+    </div>
+
+    <!-- AUTH MODAL -->
+    <div id="authModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <button onclick="closeModal('authModal')">Abbrechen</button>
+                <h2 id="authTitle">Login / Register</h2>
+                <div></div>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <span class="form-label">E-MAIL</span>
+                    <input type="email" id="authEmail" class="form-input" placeholder="name@example.com">
+                </div>
+                <div class="form-group">
+                    <span class="form-label">PASSWORT</span>
+                    <input type="password" id="authPassword" class="form-input" placeholder="••••••••">
+                </div>
+                <button class="auth-btn-full bouncy" onclick="login()">Anmelden</button>
+                <button class="delete-btn-full bouncy" style="background: rgba(255, 255, 255, 0.05); color: #fff;" onclick="signUp()">Konto erstellen</button>
+            </div>
         </div>
     </div>
 
@@ -586,7 +617,11 @@
     </div>
 
     <script>
-        // MAPPING: SF Symbols -> Font Awesome Icons
+        // SUPABASE CONFIGURATION
+        const SUPABASE_URL = "https://rfcclktwfzyihcjjpiya.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_5URf8UCOBdWpVxcA0VSAbw_2NO4jzan";
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
         const iconMapping = {
             "drop.fill": "fa-droplet",
             "book.fill": "fa-book",
@@ -638,40 +673,82 @@
         const availableIcons = Object.keys(iconMapping);
         const shortWeekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-        // STATE MANAGEMENT
         let habits = [];
         let completions = {}; // { habitId: Set of "YYYY-MM-DD" }
+        let currentUser = null;
         let selectedHabitForEdit = null;
         let selectedHabitForDetail = null;
         let selectedDetailMonthDate = new Date();
 
-        // DRAG AND DROP TEMP STATE
-        let draggedIndex = null;
-
-        // FORM TEMP STATE
         let formColor = "#EE8172";
         let formIcon = "drop.fill";
 
-        // STORAGE KEYS
-        const HABITS_KEY = "habit_tracker_habits_v10";
-        const COMPLETIONS_KEY = "habit_tracker_completions_v10";
+        async function initApp() {
+            const { data: { session } } = await supabase.auth.getSession();
+            updateUserSession(session?.user || null);
 
-        // INIT
-        function initApp() {
-            loadData();
-            if (habits.length === 0) {
-                habits = [
-                    { id: generateUUID(), name: "Drink Water", icon: "drop.fill", colorHex: "#6CB8E6", createdAt: new Date().toISOString() },
-                    { id: generateUUID(), name: "Read Book", icon: "book.fill", colorHex: "#DE8CE4", createdAt: new Date().toISOString() },
-                    { id: generateUUID(), name: "Workout", icon: "figure.run", colorHex: "#7BC896", createdAt: new Date().toISOString() }
-                ];
-                saveHabits();
-            }
-            renderHabitList();
+            supabase.auth.onAuthStateChange((_event, session) => {
+                updateUserSession(session?.user || null);
+            });
+
             setupFormSelectors();
         }
 
-        // DATE UTILS
+        function updateUserSession(user) {
+            currentUser = user;
+            const authBtn = document.getElementById("authBtn");
+            if (user) {
+                authBtn.innerText = "Logout";
+                loadDataFromSupabase();
+            } else {
+                authBtn.innerText = "Login";
+                habits = [];
+                completions = {};
+                renderHabitList();
+            }
+        }
+
+        async function loadDataFromSupabase() {
+            if (!currentUser) return;
+
+            const { data: habitsData, error: habitsErr } = await supabase
+                .from('habits')
+                .select('*')
+                .order('created_at', { ascending: true });
+
+            if (habitsErr) {
+                console.error(habitsErr);
+                return;
+            }
+
+            habits = habitsData.map(h => ({
+                id: h.id,
+                name: h.name,
+                icon: h.icon,
+                colorHex: h.color_hex,
+                createdAt: h.created_at
+            }));
+
+            const { data: compData, error: compErr } = await supabase
+                .from('completions')
+                .select('*');
+
+            if (compErr) {
+                console.error(compErr);
+                return;
+            }
+
+            completions = {};
+            compData.forEach(c => {
+                if (!completions[c.habit_id]) {
+                    completions[c.habit_id] = new Set();
+                }
+                completions[c.habit_id].add(c.completed_date);
+            });
+
+            renderHabitList();
+        }
+
         function formatDateKey(date) {
             const d = new Date(date);
             const year = d.getFullYear();
@@ -690,40 +767,6 @@
             return d;
         }
 
-        function generateUUID() {
-            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-                return v.toString(16);
-            });
-        }
-
-        // STORAGE LOGIC
-        function loadData() {
-            const hData = localStorage.getItem(HABITS_KEY);
-            const cData = localStorage.getItem(COMPLETIONS_KEY);
-            if (hData) habits = JSON.parse(hData);
-            if (cData) {
-                const parsed = JSON.parse(cData);
-                completions = {};
-                for (let key in parsed) {
-                    completions[key] = new Set(parsed[key]);
-                }
-            }
-        }
-
-        function saveHabits() {
-            localStorage.setItem(HABITS_KEY, JSON.stringify(habits));
-        }
-
-        function saveCompletions() {
-            const exportObj = {};
-            for (let key in completions) {
-                exportObj[key] = Array.from(completions[key]);
-            }
-            localStorage.setItem(COMPLETIONS_KEY, JSON.stringify(exportObj));
-        }
-
-        // LOGIC: CALCULATE STREAK
         function currentStreak(habitId) {
             const set = completions[habitId];
             if (!set || set.size === 0) return 0;
@@ -747,23 +790,35 @@
             return set ? set.has(formatDateKey(date)) : false;
         }
 
-        function toggleCompletion(habitId, date) {
+        async function toggleCompletion(habitId, date) {
+            if (!currentUser) {
+                openModal("authModal");
+                return;
+            }
+
             const today = getStartOfDay(new Date());
             const target = getStartOfDay(date);
             if (target > today) return;
 
+            const dateStr = formatDateKey(date);
             if (!completions[habitId]) {
                 completions[habitId] = new Set();
             }
 
-            const key = formatDateKey(date);
-            if (completions[habitId].has(key)) {
-                completions[habitId].delete(key);
+            if (completions[habitId].has(dateStr)) {
+                completions[habitId].delete(dateStr);
+                await supabase
+                    .from('completions')
+                    .delete()
+                    .eq('habit_id', habitId)
+                    .eq('completed_date', dateStr);
             } else {
-                completions[habitId].add(key);
+                completions[habitId].add(dateStr);
+                await supabase
+                    .from('completions')
+                    .insert({ habit_id: habitId, completed_date: dateStr });
             }
 
-            saveCompletions();
             renderHabitList();
             if (selectedHabitForDetail && selectedHabitForDetail.id === habitId) {
                 renderDetailContent();
@@ -786,10 +841,19 @@
             return count;
         }
 
-        // RENDER MAIN LIST
         function renderHabitList() {
             const container = document.getElementById("habitListContainer");
             container.innerHTML = "";
+
+            if (!currentUser) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fa-solid fa-lock"></i>
+                        <p>Bitte melde dich an,<br>um deine Habits zu verwalten.</p>
+                    </div>
+                `;
+                return;
+            }
 
             if (habits.length === 0) {
                 container.innerHTML = `
@@ -803,57 +867,19 @@
 
             const today = getStartOfDay(new Date());
 
-            habits.forEach((habit, index) => {
+            habits.forEach((habit) => {
                 const card = document.createElement("div");
                 card.className = "habit-card bouncy";
-                card.draggable = true;
-                card.dataset.index = index;
 
                 card.onclick = (e) => {
                     if (e.target.closest('button')) return;
                     openDetailModal(habit);
                 };
 
-                // DRAG & DROP EVENT LISTENERS
-                card.addEventListener('dragstart', (e) => {
-                    draggedIndex = index;
-                    card.classList.add('dragging');
-                    e.dataTransfer.effectAllowed = 'move';
-                });
-
-                card.addEventListener('dragend', () => {
-                    card.classList.remove('dragging');
-                    document.querySelectorAll('.habit-card').forEach(c => c.classList.remove('drag-over'));
-                });
-
-                card.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    if (draggedIndex === index) return;
-                    card.classList.add('drag-over');
-                });
-
-                card.addEventListener('dragleave', () => {
-                    card.classList.remove('drag-over');
-                });
-
-                card.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    card.classList.remove('drag-over');
-                    if (draggedIndex === null || draggedIndex === index) return;
-                    
-                    const movedItem = habits.splice(draggedIndex, 1)[0];
-                    habits.splice(index, 0, movedItem);
-                    draggedIndex = null;
-                    
-                    saveHabits();
-                    renderHabitList();
-                });
-
                 const faIcon = iconMapping[habit.icon] || "fa-star";
                 const streak = currentStreak(habit.id);
                 const isDoneToday = isCompleted(habit.id, today);
 
-                // Week dots construction
                 let weekDotsHTML = "";
                 for (let i = 0; i < 7; i++) {
                     const date = new Date();
@@ -903,7 +929,34 @@
             });
         }
 
-        // FORM MODAL LOGIC
+        // AUTH HANDLERS
+        function handleAuthClick() {
+            if (currentUser) {
+                supabase.auth.signOut();
+            } else {
+                openModal("authModal");
+            }
+        }
+
+        async function login() {
+            const email = document.getElementById("authEmail").value;
+            const password = document.getElementById("authPassword").value;
+            const { error } = await supabase.auth.signInWithPassword({ email, password });
+            if (error) alert(error.message);
+            else closeModal("authModal");
+        }
+
+        async function signUp() {
+            const email = document.getElementById("authEmail").value;
+            const password = document.getElementById("authPassword").value;
+            const { error } = await supabase.auth.signUp({ email, password });
+            if (error) alert(error.message);
+            else {
+                alert("Registrierung erfolgreich! Überprüfe deine E-Mails zur Bestätigung.");
+                closeModal("authModal");
+            }
+        }
+
         function setupFormSelectors() {
             const colorGrid = document.getElementById("colorGrid");
             colorGrid.innerHTML = "";
@@ -936,6 +989,10 @@
         }
 
         function openAddModal() {
+            if (!currentUser) {
+                openModal("authModal");
+                return;
+            }
             selectedHabitForEdit = null;
             document.getElementById("formModalTitle").innerText = "New Habit";
             document.getElementById("habitNameInput").value = "";
@@ -956,31 +1013,25 @@
             openModal("formModal");
         }
 
-        function saveHabitForm() {
+        async function saveHabitForm() {
             const name = document.getElementById("habitNameInput").value.trim();
-            if (!name) return;
+            if (!name || !currentUser) return;
 
             if (selectedHabitForEdit) {
-                selectedHabitForEdit.name = name;
-                selectedHabitForEdit.colorHex = formColor;
-                selectedHabitForEdit.icon = formIcon;
+                await supabase
+                    .from('habits')
+                    .update({ name: name, color_hex: formColor, icon: formIcon })
+                    .eq('id', selectedHabitForEdit.id);
             } else {
-                const newHabit = {
-                    id: generateUUID(),
-                    name: name,
-                    icon: formIcon,
-                    colorHex: formColor,
-                    createdAt: new Date().toISOString()
-                };
-                habits.push(newHabit);
+                await supabase
+                    .from('habits')
+                    .insert({ name: name, icon: formIcon, color_hex: formColor, user_id: currentUser.id });
             }
 
-            saveHabits();
-            renderHabitList();
+            await loadDataFromSupabase();
             closeModal("formModal");
         }
 
-        // DETAIL MODAL LOGIC
         function openDetailModal(habit) {
             selectedHabitForDetail = habit;
             selectedDetailMonthDate = new Date();
@@ -1100,19 +1151,19 @@
             return html;
         }
 
-        function deleteCurrentHabit() {
+        async function deleteCurrentHabit() {
             if (!selectedHabitForDetail) return;
             if (confirm(`Delete habit '${selectedHabitForDetail.name}'?`)) {
-                habits = habits.filter(h => h.id !== selectedHabitForDetail.id);
-                delete completions[selectedHabitForDetail.id];
-                saveHabits();
-                saveCompletions();
-                renderHabitList();
+                await supabase
+                    .from('habits')
+                    .delete()
+                    .eq('id', selectedHabitForDetail.id);
+
+                await loadDataFromSupabase();
                 closeModal("detailModal");
             }
         }
 
-        // GENERAL MODAL HELPERS
         function openModal(id) {
             document.getElementById(id).classList.add("active");
         }
@@ -1125,7 +1176,6 @@
             return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
         }
 
-        // RUN ON LOAD
         window.onload = initApp;
     </script>
 </body>
