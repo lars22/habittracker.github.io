@@ -1,1376 +1,570 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0" />
-<title>Habit Tracker</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<!-- Google Fonts Material Symbols -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,600,0,0" />
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Habits</title>
 <style>
   :root {
-    --bg: #24395F;
-    --surface: #2D4A70;
-    --surface-soft: #385985;
-    --ink: #D8E0EA;
-    --ink-soft: #8FA4BF;
-    --ink-faint: #5E7799;
-    --line: #3D6190;
-    --shadow: 0 10px 30px rgba(0, 0, 0, 0.25), 0 2px 6px rgba(0, 0, 0, 0.15);
-    --radius-lg: 22px;
-    --radius-md: 16px;
-    --radius-sm: 10px;
+    --bg: #0F172A;
+    --card: #1E293B;
+    --border: #334155;
+    --text-dim: #94A3B8;
+    --text-faint: #64748B;
+    --future: #1E293B;
   }
-
-  ::selection { background: rgba(255, 255, 255, 0.15); }
-
-  * { box-sizing: border-box; }
-
-  html, body {
-    margin: 0;
-    max-width: 100%;
-    overflow-x: hidden;
-  }
-
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   body {
-    font-family: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
-    background: var(--bg);
-    color: var(--ink);
-    -webkit-font-smoothing: antialiased;
-  }
-
-  .material-symbols-rounded {
-    font-family: 'Material Symbols Rounded';
-    font-weight: normal;
-    font-style: normal;
-    font-size: 22px;
-    line-height: 1;
-    letter-spacing: normal;
-    text-transform: none;
-    display: inline-block;
-    white-space: nowrap;
-    word-wrap: normal;
-    direction: ltr;
-    -webkit-font-smoothing: antialiased;
-  }
-
-  .app {
-    max-width: 980px;
-    margin: 0 auto;
-    padding: 40px 24px 80px;
-    padding-left: max(24px, env(safe-area-inset-left));
-    padding-right: max(24px, env(safe-area-inset-right));
-    padding-bottom: max(80px, calc(env(safe-area-inset-bottom) + 40px));
-    overflow-x: hidden;
-  }
-
-  header.top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 32px;
-    gap: 16px;
-    flex-wrap: wrap;
-  }
-
-  header.top h1 {
-    font-size: 26px;
-    font-weight: 800;
-    letter-spacing: -0.02em;
     margin: 0;
-    color: var(--ink);
+    background: var(--bg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #fff;
+    min-height: 100vh;
+    padding-bottom: 100px;
   }
-
-  header.top p {
-    margin: 4px 0 0;
-    color: var(--ink-soft);
-    font-size: 14px;
+  header {
+    padding: 24px 20px 12px;
+  }
+  header h1 {
+    margin: 0;
+    font-size: 30px;
+    font-weight: 800;
+  }
+  .empty {
+    text-align: center;
+    color: var(--text-dim);
+    margin-top: 80px;
+    font-size: 16px;
     font-weight: 500;
+    line-height: 1.5;
   }
-
-  .btn-primary {
-    background: var(--ink);
-    color: var(--bg);
-    border: none;
-    border-radius: 999px;
-    padding: 12px 20px;
-    font-family: inherit;
-    font-weight: 700;
-    font-size: 14px;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    transition: transform 0.15s ease, background 0.15s ease, filter 0.15s ease;
-    flex-shrink: 0;
-  }
-  .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
-  .btn-primary:active { transform: translateY(0); }
-
-  .habit-list {
+  .list {
+    padding: 8px 16px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 14px;
   }
-
-  .habit-card {
-    background: var(--surface);
-    border-radius: var(--radius-md);
-    padding: 18px 20px;
-    box-shadow: var(--shadow);
-    cursor: grab;
-    user-select: none;
-    border: 1.5px solid transparent;
-    transition: border-color 0.15s ease, transform 0.15s ease, opacity 0.15s ease;
+  .card {
+    background: var(--card);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 18px;
+    padding: 14px 16px;
     display: flex;
     align-items: center;
-    gap: 16px;
-    text-align: left;
-    width: 100%;
-    color: var(--ink);
+    gap: 14px;
+    cursor: pointer;
   }
-  .habit-card:hover { transform: translateY(-1px); border-color: rgba(255, 255, 255, 0.1); }
-  .habit-card:active { cursor: grabbing; }
-
-  /* Drag & Drop Styles */
-  .habit-card.dragging {
-    opacity: 0.4;
-    border: 1.5px dashed var(--ink-soft);
-  }
-  .habit-card.drag-over {
-    border-color: var(--ink);
-    transform: translateY(-3px);
-    box-shadow: 0 12px 24px rgba(0,0,0,0.3);
-  }
-
-  .drag-handle {
-    color: var(--ink-faint);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: -4px;
-    cursor: grab;
-  }
-  .drag-handle .material-symbols-rounded { font-size: 20px; }
-
-  .habit-icon,
-  .quick-check {
+  .icon-box {
     width: 44px;
     height: 44px;
-    min-width: 44px;
-    border-radius: 50%;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-size: 20px;
     flex-shrink: 0;
   }
-
-  .quick-check {
-    border: 1.5px solid var(--line);
-    background: var(--surface-soft);
-    color: transparent;
-    cursor: pointer;
-    transition: transform 0.12s ease, background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  .card-body { flex: 1; min-width: 0; }
+  .card-name {
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 8px;
   }
-  .quick-check:hover { transform: scale(1.08); border-color: var(--card-color); }
-  .quick-check:active { transform: scale(0.9); }
-  .quick-check.done {
-    background: var(--card-color);
-    border-color: var(--card-color);
-    color: #121D2D;
-  }
-
-  .habit-icon {
-    background: var(--card-color-soft);
-    color: var(--card-color);
-  }
-
-  .habit-card .meta { flex: 1; min-width: 0; overflow: hidden; }
-
-  .habit-card .name {
-    font-weight: 800;
-    font-size: 18px;
-    margin: 0 0 6px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    letter-spacing: -0.01em;
-  }
-
-  .dot-trail {
+  .week-row {
     display: flex;
-    gap: 10px;
-    align-items: flex-end;
-    margin-top: 4px;
-    max-width: 100%;
-    overflow-x: auto;
-    overflow-y: hidden;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-    padding-bottom: 1px;
+    align-items: center;
+    gap: 7px;
   }
-  .dot-trail::-webkit-scrollbar { display: none; }
-
-  .dot-col {
+  .day-btn {
+    background: none;
+    border: none;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 5px;
-    flex-shrink: 0;
+    gap: 4px;
+    cursor: pointer;
+    padding: 2px;
   }
-
-  .dot-trail .dot {
+  .dot {
     width: 12px;
     height: 12px;
     border-radius: 50%;
-    background: var(--surface-soft);
-    transition: background 0.2s ease, box-shadow 0.2s ease;
+    background: var(--border);
   }
-
-  .dot-trail .dot.on {
-    background: var(--card-color);
-    box-shadow: 0 0 10px var(--card-color-glow);
+  .dot.future { background: var(--future); border: 1px solid var(--border); }
+  .day-label {
+    font-size: 9px;
+    color: var(--text-faint);
   }
-
-  .dot-col .day-label {
-    font-size: 10px;
+  .day-label.future { color: var(--border); }
+  .day-label.today { font-weight: 700; }
+  .streak {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 12px;
     font-weight: 700;
-    color: var(--ink-faint);
-    text-transform: uppercase;
+    margin-left: 4px;
   }
-
-  .dot-col.is-today .day-label {
-    color: var(--card-color);
+  .done-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1.5px solid #475569;
+    background: #1E293B;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
     font-weight: 800;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: transform 0.15s;
   }
-
-  .streak-tag {
-    font-size: 13px;
-    font-weight: 800;
-    color: var(--card-color);
-    margin-left: 6px;
-    white-space: nowrap;
-    letter-spacing: 0.02em;
-    align-self: center;
+  .done-btn:active { transform: scale(0.9); }
+  .fab {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(90deg, #6366F1, #8B5CF6);
+    color: #fff;
+    border: none;
+    padding: 14px 22px;
+    border-radius: 999px;
+    font-size: 16px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(99,102,241,0.4);
   }
+  .fab:active { transform: translateX(-50%) scale(0.95); }
 
-  .empty-list {
-    background: var(--surface);
-    border-radius: var(--radius-md);
-    padding: 32px 20px;
-    text-align: center;
-    color: var(--ink-soft);
-    font-size: 15px;
-    box-shadow: var(--shadow);
+  /* Modal */
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 10;
+    align-items: flex-end;
   }
-
-  .detail-modal {
-    background: var(--surface);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow);
-    padding: 26px;
+  .overlay.open { display: flex; }
+  .sheet {
+    background: var(--bg);
     width: 100%;
-    max-width: 420px;
     max-height: 88vh;
     overflow-y: auto;
+    border-radius: 20px 20px 0 0;
+    padding: 16px;
+    animation: slideUp 0.25s ease-out;
   }
-
-  .detail-header {
+  @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .sheet-header {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 22px;
-    gap: 12px;
-  }
-
-  .detail-header-actions {
-    display: flex;
-    gap: 8px;
-    flex-shrink: 0;
-  }
-
-  .detail-title {
-    display: flex;
     align-items: center;
-    gap: 12px;
+    padding: 4px 4px 16px;
   }
-
-  .detail-title .habit-icon { width: 48px; height: 48px; }
-  .detail-title .habit-icon .material-symbols-rounded { font-size: 26px; }
-
-  .detail-title h2 {
-    margin: 0;
-    font-size: 22px;
-    font-weight: 800;
-    letter-spacing: -0.01em;
-  }
-
-  .icon-btn {
-    border: none;
-    background: var(--surface-soft);
-    color: var(--ink-soft);
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.15s ease, color 0.15s ease;
-  }
-  .icon-btn:hover { background: var(--line); color: var(--ink); }
-  .icon-btn.danger:hover { background: rgba(239, 68, 68, 0.2); color: #EF4444; }
-
-  .stat-row {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-    margin-bottom: 22px;
-  }
-  .stat-box {
-    background: var(--surface-soft);
-    border-radius: var(--radius-sm);
-    padding: 14px 10px;
-    text-align: center;
-  }
-  .stat-box .val { font-size: 20px; font-weight: 800; color: var(--ink); }
-  .stat-box .lbl { font-size: 11px; color: var(--ink-soft); font-weight: 600; margin-top: 2px; }
-
-  .month-nav {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 14px;
-  }
-  .month-nav .title { font-weight: 700; font-size: 15px; color: var(--ink); }
-  .month-nav button {
-    border: none;
+  .sheet-header button {
     background: none;
-    color: var(--card-color);
-    font-size: 18px;
-    cursor: pointer;
-    padding: 6px;
-    font-weight: 700;
-  }
-  .month-nav button:disabled { color: var(--ink-faint); cursor: default; }
-
-  .weekday-row {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    margin-bottom: 6px;
-  }
-  .weekday-row span {
-    text-align: center;
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--ink-soft);
-  }
-
-  .day-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    row-gap: 6px;
-  }
-
-  .day-cell {
-    aspect-ratio: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-  }
-
-  .day-btn {
-    width: 78%;
-    height: 78%;
-    border-radius: 50%;
     border: none;
-    background: var(--surface-soft);
-    color: var(--ink);
-    font-size: 13px;
+    color: #818CF8;
+    font-size: 16px;
     font-weight: 600;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: transform 0.12s ease, background 0.15s ease, color 0.15s ease;
-    position: relative;
   }
-  .day-btn:hover:not(:disabled) { transform: scale(1.08); }
-  .day-btn:active:not(:disabled) { transform: scale(0.94); }
-  .day-btn:disabled { color: var(--ink-faint); cursor: default; opacity: 0.5; }
-
-  .day-btn.done {
-    background: var(--card-color);
-    color: #121D2D;
-    font-weight: 800;
-  }
-  .day-btn.today:not(.done) {
-    box-shadow: inset 0 0 0 1.5px var(--card-color);
-  }
-
-  .day-btn.burst::after {
-    content: "";
-    position: absolute;
-    inset: -6px;
-    border-radius: 50%;
-    border: 2px solid var(--card-color);
-    opacity: 1;
-    animation: burst 0.45s ease-out forwards;
-    pointer-events: none;
-  }
-  @keyframes burst {
-    to { transform: scale(1.55); opacity: 0; }
-  }
-
-  /* Modal Overlay */
-  .overlay {
-    position: fixed; inset: 0;
-    background: rgba(18, 28, 48, 0.7);
-    backdrop-filter: blur(4px);
-    display: flex; align-items: center; justify-content: center;
-    padding: 20px;
-    z-index: 50;
-  }
-  .modal {
-    background: var(--surface);
-    border-radius: var(--radius-lg);
-    padding: 26px;
-    width: 100%;
-    max-width: 420px;
-    max-height: 88vh;
-    overflow-y: auto;
-  }
-  .modal h3 { margin: 0 0 18px; font-size: 19px; font-weight: 800; color: var(--ink); }
+  .sheet-title { font-size: 16px; font-weight: 700; }
   .field-label {
     font-size: 12px;
     font-weight: 700;
-    color: var(--ink-soft);
-    margin: 0 0 8px;
+    color: var(--text-faint);
+    letter-spacing: 0.03em;
+    margin-bottom: 8px;
     display: block;
   }
   .name-input {
     width: 100%;
-    padding: 12px 14px;
-    border-radius: var(--radius-sm);
-    border: 1.5px solid var(--line);
-    font-family: inherit;
-    font-size: 16px;
-    margin-bottom: 20px;
-    background: var(--surface-soft);
-    color: var(--ink);
-  }
-  .name-input:focus { outline: none; border-color: var(--ink-soft); }
-
-  .swatch-row {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
-    gap: 10px 8px;
+    background: var(--card);
+    border: none;
+    border-radius: 12px;
+    padding: 14px;
+    color: #fff;
+    font-size: 15px;
     margin-bottom: 22px;
-    padding: 5px 6px;
   }
-
-  .swatch-wrap {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    flex-shrink: 0;
-    box-shadow: 0 0 0 2px transparent;
-    transition: box-shadow 0.15s ease, transform 0.12s ease;
+  .swatch-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 22px;
   }
-  .swatch-wrap:hover { transform: scale(1.12); }
-  .swatch-wrap.selected {
-    box-shadow: 0 0 0 2px var(--surface), 0 0 0 3.5px var(--sw-color);
-  }
-
   .swatch {
-    width: 24px;
-    height: 24px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
+    margin: 0 auto;
     cursor: pointer;
+    border: 3px solid transparent;
+    transition: transform 0.15s;
   }
-
+  .swatch.selected { border-color: #fff; transform: scale(1.15); }
   .icon-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+    grid-template-columns: repeat(6, 1fr);
     gap: 10px;
-    margin-bottom: 24px;
-    max-height: 260px;
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding: 2px;
+    margin-bottom: 12px;
   }
-  .icon-choice {
+  .icon-cell {
+    width: 100%;
     aspect-ratio: 1;
-    border-radius: 50%;
-    border: none;
-    background: var(--surface-soft);
-    color: var(--ink-soft);
-    cursor: pointer;
+    border-radius: 14px;
+    background: var(--card);
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background 0.12s ease, transform 0.12s ease, color 0.12s ease;
-  }
-  .icon-choice:hover { color: var(--ink); }
-  .icon-choice.selected {
-    background: var(--sel-color-soft);
-    color: var(--sel-color);
-    transform: scale(1.05);
-  }
-
-  .modal-actions {
-    display: flex;
-    gap: 10px;
-    justify-content: flex-end;
-  }
-  .btn-ghost {
-    background: none;
-    border: none;
-    color: var(--ink-soft);
-    font-weight: 700;
-    font-size: 14px;
-    padding: 11px 16px;
+    font-size: 19px;
     cursor: pointer;
-    border-radius: 999px;
+    border: 1.5px solid transparent;
   }
-  .btn-ghost:hover { background: var(--surface-soft); color: var(--ink); }
+  .icon-cell.selected { border-color: rgba(255,255,255,0.6); }
+  .save-btn {
+    width: 100%;
+    background: linear-gradient(90deg, #6366F1, #8B5CF6);
+    border: none;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    padding: 15px;
+    border-radius: 14px;
+    margin-top: 8px;
+    cursor: pointer;
+  }
 
-  .confirm-text { font-size: 14px; color: var(--ink-soft); margin-bottom: 22px; line-height: 1.5; }
-
-  .loading-state {
+  /* Detail sheet */
+  .stat-row { display: flex; gap: 10px; margin: 16px 0; }
+  .stat-box {
+    flex: 1;
+    background: var(--card);
+    border-radius: 16px;
+    padding: 14px 6px;
     text-align: center;
-    color: var(--ink-soft);
+  }
+  .stat-box .val { font-size: 20px; font-weight: 800; margin: 4px 0; }
+  .stat-box .lbl { font-size: 11px; color: var(--text-dim); font-weight: 500; }
+  .cal-wrap { background: var(--card); border-radius: 20px; padding: 16px; margin-top: 4px; }
+  .cal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .cal-head .nav-btn { background: none; border: none; color: var(--text-dim); font-size: 18px; cursor: pointer; padding: 4px 10px; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+  .cal-wd { text-align: center; font-size: 11px; font-weight: 700; color: var(--text-faint); }
+  .cal-day {
+    aspect-ratio: 1;
+    border-radius: 10px;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+  }
+  .cal-day.today { border-color: var(--accent, #fff); background: var(--border); }
+  .cal-day.future { opacity: 0.3; cursor: default; }
+  .header-box {
+    background: var(--card);
+    border-radius: 20px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 4px;
+  }
+  .delete-btn {
+    width: 100%;
+    background: none;
+    border: 1px solid #ED8CB1;
+    color: #ED8CB1;
     font-size: 15px;
     font-weight: 600;
-    padding: 60px 20px;
-  }
-  .loading-state.error { color: #FF9A8C; }
-
-  /* ===================== Mobile (iPhone) ===================== */
-  @media (max-width: 600px) {
-    .app {
-      padding: 24px 14px 40px;
-      padding-left: max(14px, env(safe-area-inset-left));
-      padding-right: max(14px, env(safe-area-inset-right));
-    }
-
-    header.top { margin-bottom: 22px; }
-    header.top h1 { font-size: 22px; }
-    .btn-primary {
-      width: 100%;
-      justify-content: center;
-      padding: 13px 20px;
-    }
-
-    .habit-card {
-      padding: 14px 14px;
-      gap: 10px;
-    }
-
-    /* Drag handle relies on HTML5 DnD, which isn't usable via touch on iOS anyway */
-    .drag-handle { display: none; }
-
-    .habit-icon, .quick-check {
-      width: 38px;
-      height: 38px;
-      min-width: 38px;
-    }
-    .habit-icon .material-symbols-rounded { font-size: 19px; }
-
-    .habit-card .name { font-size: 16px; margin-bottom: 5px; }
-
-    .dot-trail { gap: 7px; }
-    .dot-trail .dot { width: 9px; height: 9px; }
-    .dot-col { gap: 4px; }
-    .dot-col .day-label { font-size: 9px; }
-    .streak-tag { font-size: 12px; margin-left: 4px; }
-
-    .detail-modal, .modal {
-      padding: 20px;
-      max-width: 100%;
-      border-radius: var(--radius-md);
-    }
-
-    .overlay { padding: 12px; padding-bottom: max(12px, env(safe-area-inset-bottom)); }
-
-    .stat-row { gap: 8px; }
-    .stat-box { padding: 12px 6px; }
-    .stat-box .val { font-size: 18px; }
-
-    .icon-grid {
-      grid-template-columns: repeat(auto-fill, minmax(38px, 1fr));
-      gap: 8px;
-      max-height: 240px;
-    }
-
-    .swatch-wrap { width: 32px; height: 32px; }
-    .swatch { width: 22px; height: 22px; }
-  }
-
-  @media (max-width: 380px) {
-    .app { padding-left: max(10px, env(safe-area-inset-left)); padding-right: max(10px, env(safe-area-inset-right)); }
-    .habit-card { padding: 12px 10px; gap: 8px; }
-    .dot-trail { gap: 5px; }
-    .streak-tag { display: none; }
+    padding: 13px;
+    border-radius: 14px;
+    margin-top: 24px;
+    cursor: pointer;
   }
 </style>
 </head>
 <body>
 
-<div class="app" id="app"></div>
+<header><h1>My Habits</h1></header>
+<div id="listWrap"></div>
 
-<!-- sql.js: SQLite compiled to WebAssembly, runs entirely in the browser -->
-<script src="https://cdn.jsdelivr.net/npm/sql.js@1.10.2/dist/sql-wasm.js"></script>
+<button class="fab" onclick="openForm()">
+  <span>＋</span><span>New Habit</span>
+</button>
+
+<!-- Form Sheet -->
+<div class="overlay" id="formOverlay">
+  <div class="sheet">
+    <div class="sheet-header">
+      <button onclick="closeForm()">Cancel</button>
+      <span class="sheet-title" id="formTitle">New Habit</span>
+      <button onclick="saveHabit()">Save</button>
+    </div>
+    <label class="field-label">NAME</label>
+    <input class="name-input" id="nameInput" placeholder="e.g. Drink 2L Water">
+
+    <label class="field-label">COLOR</label>
+    <div class="swatch-grid" id="swatchGrid"></div>
+
+    <label class="field-label">ICON</label>
+    <div class="icon-grid" id="iconGrid"></div>
+  </div>
+</div>
+
+<!-- Detail Sheet -->
+<div class="overlay" id="detailOverlay">
+  <div class="sheet" id="detailSheet"></div>
+</div>
+
 <script>
-(function () {
-  "use strict";
+// Neue 8er-Farbpalette
+const PALETTE = [
+  "#EE8172", // Koralle / Rot
+  "#F0A25D", // Orange
+  "#E1C252", // Gelb
+  "#B3CE5B", // Limettengrün
+  "#7BC896", // Mintgrün
+  "#6CB8E6", // Hellblau
+  "#DE8CE4", // Flieder / Violett
+  "#ED8CB1"  // Rosa
+];
+const ICONS = ["💧","📖","🏃","🌙","☀️","🍃","☕","🏋️","❤️","🧠","🔥","✏️","🛌","🍽️","💊","💻","🎨","🎯","🚴","➕","✅","🎓","🎵","📷","🛒","👛","🌍","🌳","⏳","🫧","🚶","🧘","✨","⏰","📅","📋","💡","😊","📈","🏆"];
 
-  const COLORS = [
-    "#FF5964", // Red
-    "#FF9A3C", // Orange
-    "#FBBF24", // Yellow
-    "#10B981", // Green
-    "#2DD4BF", // Teal/Mint
-    "#38BDF8", // Light Blue
-    "#3B82F6", // Blue
-    "#C084FC"  // Purple
-  ];
+// In-Memory State (kein localStorage im Artifact-Kontext)
+let habits = [
+  { id: "1", name: "Drink Water", icon: "💧", color: "#6CB8E6", createdAt: new Date() },
+  { id: "2", name: "Read Book", icon: "📖", color: "#DE8CE4", createdAt: new Date() },
+  { id: "3", name: "Workout", icon: "🏃", color: "#7BC896", createdAt: new Date() }
+];
+let completions = {}; // { habitId: Set of "yyyy-mm-dd" }
+let editingHabitId = null;
+let formColor = PALETTE[0];
+let formIcon = ICONS[0];
+let detailMonth = new Date();
+let currentDetailId = null;
 
-  const HABIT_ICONS = [
-    "water_drop",
-    "menu_book",
-    "directions_run",
-    "bedtime",
-    "wb_sunny",
-    "eco",
-    "local_cafe",
-    "fitness_center",
-    "favorite",
-    "psychology",
-    "pedal_bike",
-    "restaurant",
-    "auto_awesome",
-    "ads_click",
-    "sentiment_satisfied",
-    "edit_note",
-    "savings",
-    "cleaning_services",
-    "brush",
-    "local_fire_department",
-    "self_improvement",
-    "spa",
-    "nightlight",
-    "alarm",
-    "timer",
-    "checklist",
-    "task_alt",
-    "school",
-    "work",
-    "code",
-    "music_note",
-    "headphones",
-    "piano",
-    "palette",
-    "photo_camera",
-    "hiking",
-    "pool",
-    "sports_soccer",
-    "sports_basketball",
-    "directions_walk",
-    "pets",
-    "child_care",
-    "volunteer_activism",
-    "park",
-    "local_florist",
-    "icecream",
-    "monitor_heart",
-    "medication",
-    "shower",
-    "account_balance"
-  ];
-
-  const SHORT_WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-  const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-  const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-
-  // sql.js loads the wasm binary from this CDN folder at runtime
-  const SQL_WASM_CDN = "https://cdn.jsdelivr.net/npm/sql.js@1.10.2/dist/";
-  // IndexedDB is only used to store the exported SQLite file bytes between visits
-  const IDB_NAME = "habit-tracker-sqlite";
-  const IDB_STORE = "files";
-  const IDB_KEY = "db";
-  // one-time migration source from the previous localStorage-based version
-  const LEGACY_STORAGE_KEY = "habit-tracker-data-v5";
-
-  let db = null; // the sql.js Database instance
-
-  let state = {
-    habits: [],       
-    completions: {},  
-    openHabitId: null,  
-    viewMonth: startOfMonth(new Date()),
-    modal: null,        
-    editingHabit: null, 
-    confirmDeleteId: null,
-    loaded: false,
-    initError: null,
-    burstKey: null
-  };
-
-  let draggedIndex = null;
-  let isDragging = false;
-
-  // ---------- Date Helpers ----------
-  function pad(n) { return n < 10 ? "0" + n : "" + n; }
-  function toKey(date) { return date.getFullYear() + "-" + pad(date.getMonth() + 1) + "-" + pad(date.getDate()); }
-  function startOfDay(d) { const c = new Date(d); c.setHours(0,0,0,0); return c; }
-  function startOfMonth(d) { return new Date(d.getFullYear(), d.getMonth(), 1); }
-  function isSameDay(a, b) { return toKey(a) === toKey(b); }
-  function addDays(d, n) { const c = new Date(d); c.setDate(c.getDate() + n); return c; }
-  function addMonths(d, n) { return new Date(d.getFullYear(), d.getMonth() + n, 1); }
-  function isFuture(d) { return startOfDay(d) > startOfDay(new Date()); }
-
-  // ---------- IndexedDB (stores the raw SQLite file) ----------
-  function idbOpen() {
-    return new Promise((resolve, reject) => {
-      const req = indexedDB.open(IDB_NAME, 1);
-      req.onupgradeneeded = () => { req.result.createObjectStore(IDB_STORE); };
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
+function dateKey(d) {
+  return d.toISOString().slice(0, 10);
+}
+function isCompleted(habitId, d) {
+  return completions[habitId]?.has(dateKey(d)) ?? false;
+}
+function toggle(habitId, d) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const dd = new Date(d); dd.setHours(0,0,0,0);
+  if (dd > today) return;
+  if (!completions[habitId]) completions[habitId] = new Set();
+  const k = dateKey(d);
+  completions[habitId].has(k) ? completions[habitId].delete(k) : completions[habitId].add(k);
+  render();
+}
+function currentStreak(habitId) {
+  const set = completions[habitId];
+  if (!set || set.size === 0) return 0;
+  let streak = 0;
+  let check = new Date(); check.setHours(0,0,0,0);
+  if (!set.has(dateKey(check))) check.setDate(check.getDate() - 1);
+  while (set.has(dateKey(check))) {
+    streak++;
+    check.setDate(check.getDate() - 1);
   }
+  return streak;
+}
+function monthCount(habitId, refDate) {
+  const set = completions[habitId];
+  if (!set) return 0;
+  let count = 0;
+  set.forEach(k => {
+    const d = new Date(k);
+    if (d.getFullYear() === refDate.getFullYear() && d.getMonth() === refDate.getMonth()) count++;
+  });
+  return count;
+}
 
-  async function idbLoadDbFile() {
-    try {
-      const conn = await idbOpen();
-      return await new Promise((resolve, reject) => {
-        const tx = conn.transaction(IDB_STORE, "readonly");
-        const req = tx.objectStore(IDB_STORE).get(IDB_KEY);
-        req.onsuccess = () => resolve(req.result || null);
-        req.onerror = () => reject(req.error);
-      });
-    } catch (e) {
-      console.error("IndexedDB read failed:", e);
-      return null;
+function render() {
+  const wrap = document.getElementById("listWrap");
+  if (habits.length === 0) {
+    wrap.innerHTML = `<div class="empty">No habits found.<br>Start building your routine!</div>`;
+    return;
+  }
+  const shortWd = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  wrap.innerHTML = `<div class="list">` + habits.map(h => {
+    let daysHtml = "";
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate() - i);
+      const done = isCompleted(h.id, d);
+      const isToday = d.getTime() === today.getTime();
+      const isFuture = d > today;
+      const wd = shortWd[d.getDay()];
+      daysHtml += `
+        <button class="day-btn" onclick="event.stopPropagation(); toggle('${h.id}', new Date(${d.getTime()}))" ${isFuture ? "disabled" : ""}>
+          <div class="dot ${isFuture ? "future" : ""}" style="${done ? `background:${h.color}` : ""}"></div>
+          <div class="day-label ${isFuture ? "future" : ""} ${isToday ? "today" : ""}" style="${isToday && !isFuture ? `color:${h.color}` : ""}">${wd}</div>
+        </button>`;
     }
-  }
-
-  async function idbSaveDbFile(bytes) {
-    try {
-      const conn = await idbOpen();
-      await new Promise((resolve, reject) => {
-        const tx = conn.transaction(IDB_STORE, "readwrite");
-        tx.objectStore(IDB_STORE).put(bytes, IDB_KEY);
-        tx.oncomplete = () => resolve();
-        tx.onerror = () => reject(tx.error);
-      });
-    } catch (e) {
-      console.error("IndexedDB write failed:", e);
-    }
-  }
-
-  // ---------- SQLite helpers ----------
-  function dbAll(sql, params = []) {
-    const stmt = db.prepare(sql);
-    stmt.bind(params);
-    const rows = [];
-    while (stmt.step()) rows.push(stmt.getAsObject());
-    stmt.free();
-    return rows;
-  }
-
-  function ensureSchema() {
-    db.run(`
-      CREATE TABLE IF NOT EXISTS habits (
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        icon TEXT NOT NULL,
-        color TEXT NOT NULL,
-        position INTEGER NOT NULL DEFAULT 0,
-        created_at TEXT NOT NULL
-      );
-      CREATE TABLE IF NOT EXISTS completions (
-        habit_id TEXT NOT NULL,
-        date TEXT NOT NULL,
-        PRIMARY KEY (habit_id, date)
-      );
-      CREATE INDEX IF NOT EXISTS idx_completions_habit ON completions(habit_id);
-    `);
-  }
-
-  // Imports data from the old localStorage version, once, if the new DB is still empty
-  function migrateLegacyDataIfNeeded() {
-    const count = dbAll("SELECT COUNT(*) AS c FROM habits")[0].c;
-    if (count > 0) return;
-
-    let legacy = null;
-    try {
-      const raw = localStorage.getItem(LEGACY_STORAGE_KEY);
-      if (raw) legacy = JSON.parse(raw);
-    } catch (e) { /* ignore malformed legacy data */ }
-    if (!legacy || !Array.isArray(legacy.habits) || legacy.habits.length === 0) return;
-
-    legacy.habits.forEach((h, i) => {
-      db.run("INSERT INTO habits (id, name, icon, color, position, created_at) VALUES (?, ?, ?, ?, ?, ?)",
-        [h.id, h.name, h.icon, h.color, i, h.createdAt || new Date().toISOString()]);
-      const days = (legacy.completions && legacy.completions[h.id]) || [];
-      days.forEach(dateKey => {
-        db.run("INSERT OR IGNORE INTO completions (habit_id, date) VALUES (?, ?)", [h.id, dateKey]);
-      });
-    });
-    localStorage.removeItem(LEGACY_STORAGE_KEY);
-  }
-
-  function loadStateFromDb() {
-    const habitRows = dbAll("SELECT id, name, icon, color, created_at FROM habits ORDER BY position ASC");
-    state.habits = habitRows.map(r => ({ id: r.id, name: r.name, icon: r.icon, color: r.color, createdAt: r.created_at }));
-
-    const compRows = dbAll("SELECT habit_id, date FROM completions");
-    const map = {};
-    compRows.forEach(r => {
-      if (!map[r.habit_id]) map[r.habit_id] = [];
-      map[r.habit_id].push(r.date);
-    });
-    state.completions = map;
-  }
-
-  // ---------- Persistence ----------
-  async function loadData() {
-    try {
-      const initSqlJs = window.initSqlJs;
-      const SQLModule = await initSqlJs({ locateFile: file => SQL_WASM_CDN + file });
-      const savedBytes = await idbLoadDbFile();
-      db = savedBytes ? new SQLModule.Database(new Uint8Array(savedBytes)) : new SQLModule.Database();
-      ensureSchema();
-      migrateLegacyDataIfNeeded();
-      loadStateFromDb();
-      persist();
-    } catch (e) {
-      console.error("Database init failed:", e);
-      state.initError = "Die Datenbank konnte nicht geladen werden. Bitte prüfe deine Internetverbindung und lade die Seite neu.";
-    }
-
-    state.loaded = true;
-    render();
-  }
-
-  function persist() {
-    if (!db) return;
-    try {
-      const bytes = db.export();
-      idbSaveDbFile(bytes);
-    } catch (e) {
-      console.error("Saving failed:", e);
-    }
-  }
-
-  // ---------- Derived Data ----------
-  function habitDays(habitId) {
-    return new Set(state.completions[habitId] || []);
-  }
-
-  function isDone(habitId, date) {
-    return habitDays(habitId).has(toKey(date));
-  }
-
-  function currentStreak(habitId) {
-    const days = habitDays(habitId);
-    if (days.size === 0) return 0;
-    let streak = 0;
-    let cursor = startOfDay(new Date());
-    if (!days.has(toKey(cursor))) cursor = addDays(cursor, -1);
-    while (days.has(toKey(cursor))) {
-      streak++;
-      cursor = addDays(cursor, -1);
-    }
-    return streak;
-  }
-
-  function monthCount(habitId, monthDate) {
-    const days = state.completions[habitId] || [];
-    const y = monthDate.getFullYear(), m = monthDate.getMonth();
-    return days.filter(k => {
-      const [ky, km] = k.split("-").map(Number);
-      return ky === y && km === m + 1;
-    }).length;
-  }
-
-  function lastNDays(n) {
-    const today = startOfDay(new Date());
-    const out = [];
-    for (let i = n - 1; i >= 0; i--) out.push(addDays(today, -i));
-    return out;
-  }
-
-  function getNextColor() {
-    const usedColors = state.habits.map(h => h.color);
-    for (const color of COLORS) {
-      if (!usedColors.includes(color)) return color;
-    }
-    return COLORS[state.habits.length % COLORS.length];
-  }
-
-  // ---------- State Mutations ----------
-  function toggleDay(habitId, date) {
-    if (isFuture(date)) return;
-    const key = toKey(date);
-    const list = state.completions[habitId] ? state.completions[habitId].slice() : [];
-    const idx = list.indexOf(key);
-    let justCompleted = false;
-    if (idx >= 0) {
-      list.splice(idx, 1);
-      db.run("DELETE FROM completions WHERE habit_id = ? AND date = ?", [habitId, key]);
-    } else {
-      list.push(key);
-      justCompleted = true;
-      db.run("INSERT OR IGNORE INTO completions (habit_id, date) VALUES (?, ?)", [habitId, key]);
-    }
-    state.completions[habitId] = list;
-    if (justCompleted) {
-      state.burstKey = habitId + "|" + key;
-      setTimeout(() => { state.burstKey = null; render(); }, 450);
-    }
-    persist();
-    render();
-  }
-
-  function addHabit(draft) {
-    const habit = {
-      id: "h_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8),
-      name: draft.name.trim(),
-      icon: draft.icon,
-      color: draft.color,
-      createdAt: new Date().toISOString()
-    };
-    const position = state.habits.length;
-    db.run("INSERT INTO habits (id, name, icon, color, position, created_at) VALUES (?, ?, ?, ?, ?, ?)",
-      [habit.id, habit.name, habit.icon, habit.color, position, habit.createdAt]);
-    state.habits.push(habit);
-    state.completions[habit.id] = [];
-    persist();
-  }
-
-  function updateHabit(draft) {
-    const habit = state.habits.find(h => h.id === draft.id);
-    if (!habit) return;
-    habit.name = draft.name.trim();
-    habit.color = draft.color;
-    habit.icon = draft.icon;
-    db.run("UPDATE habits SET name = ?, color = ?, icon = ? WHERE id = ?",
-      [habit.name, habit.color, habit.icon, habit.id]);
-    persist();
-  }
-
-  function deleteHabit(id) {
-    state.habits = state.habits.filter(h => h.id !== id);
-    delete state.completions[id];
-    if (state.openHabitId === id) state.openHabitId = null;
-    db.run("DELETE FROM completions WHERE habit_id = ?", [id]);
-    db.run("DELETE FROM habits WHERE id = ?", [id]);
-    persist();
-  }
-
-  function saveHabitForm() {
-    if (!state.editingHabit || !state.editingHabit.name.trim()) return;
-    if (state.modal === "edit") {
-      updateHabit(state.editingHabit);
-    } else {
-      addHabit(state.editingHabit);
-    }
-    state.modal = null;
-    state.editingHabit = null;
-    render();
-  }
-
-  // ---------- Rendering ----------
-  function esc(s) {
-    const div = document.createElement("div");
-    div.textContent = s;
-    return div.outerHTML.replace(/^<div>|<\/div>$/g, "");
-  }
-
-  function renderIcon(iconName) {
-    return `<span class="material-symbols-rounded">${iconName}</span>`;
-  }
-
-  function render() {
-    const app = document.getElementById("app");
-    if (!state.loaded) {
-      app.innerHTML = `<div class="loading-state">Wird geladen …</div>`;
-      return;
-    }
-    if (state.initError) {
-      app.innerHTML = `<div class="loading-state error">${esc(state.initError)}</div>`;
-      return;
-    }
-
-    const existingDetailModal = document.querySelector(".detail-modal");
-    const scrollTop = existingDetailModal ? existingDetailModal.scrollTop : 0;
-
-    app.innerHTML = `
-      <header class="top">
-        <div>
-          <h1>Habit Tracker</h1>
-          <p>${state.habits.length} ${state.habits.length === 1 ? "habit" : "habits"}</p>
-        </div>
-        <button class="btn-primary" id="openAdd">＋ New Habit</button>
-      </header>
-      <div class="habit-list" id="habitList">
-        ${state.habits.length ? state.habits.map((h, i) => renderHabitCard(h, i)).join("") : `
-          <div class="empty-list">No habits added yet.<br>Click "New Habit" above to create one.</div>
-        `}
-      </div>
-      ${state.openHabitId ? renderDetailOverlay() : ""}
-      ${state.modal ? renderModal() : ""}
-    `;
-
-    const newDetailModal = document.querySelector(".detail-modal");
-    if (newDetailModal && existingDetailModal) {
-      newDetailModal.scrollTop = scrollTop;
-    }
-
-    attachEvents();
-  }
-
-  function renderHabitCard(h, index) {
-    const days = lastNDays(7);
-    const todayDate = new Date();
-
-    const dotsHtml = days.map(d => {
-      const done = isDone(h.id, d);
-      const isToday = isSameDay(d, todayDate);
-      const dayName = SHORT_WEEKDAYS[d.getDay()];
-
-      return `
-        <div class="dot-col ${isToday ? "is-today" : ""}">
-          <span class="dot ${done ? "on" : ""}"></span>
-          <span class="day-label">${dayName}</span>
-        </div>
-      `;
-    }).join("");
-
     const streak = currentStreak(h.id);
-    const doneToday = isDone(h.id, todayDate);
+    const streakHtml = streak > 0 ? `<div class="streak" style="color:${h.color}">🔥${streak}</div>` : "";
+    const doneToday = isCompleted(h.id, today);
 
     return `
-      <div class="habit-card" data-open="${h.id}" data-index="${index}" draggable="true"
-        style="--card-color:${h.color}; --card-color-soft:${h.color}25; --card-color-glow:${h.color}50;">
-        <div class="drag-handle" title="Drag to reorder">${renderIcon('drag_indicator')}</div>
-        <div class="habit-icon">${renderIcon(h.icon)}</div>
-        <div class="meta">
-          <p class="name">${esc(h.name)}</p>
-          <div class="dot-trail">
-            ${dotsHtml}
-            ${streak > 0 ? `<span class="streak-tag">✦ ${streak}</span>` : ""}
-          </div>
+      <div class="card" onclick="openDetail('${h.id}')">
+        <div class="icon-box" style="background:${h.color}2e; color:${h.color}">${h.icon}</div>
+        <div class="card-body">
+          <div class="card-name">${h.name}</div>
+          <div class="week-row">${daysHtml}${streakHtml}</div>
         </div>
-        <div class="quick-check ${doneToday ? "done" : ""}" data-quick-check="${h.id}" title="Completed today">
-          ${doneToday ? renderIcon('check') : ''}
+        <button class="done-btn" style="${doneToday ? `background:${h.color};border-color:${h.color};color:#0F172A` : ""}"
+          onclick="event.stopPropagation(); toggle('${h.id}', new Date(${today.getTime()}))">✓</button>
+      </div>`;
+  }).join("") + `</div>`;
+}
+
+// ---- Form ----
+function openForm(habit) {
+  editingHabitId = habit ? habit.id : null;
+  document.getElementById("formTitle").textContent = habit ? "Edit Habit" : "New Habit";
+  document.getElementById("nameInput").value = habit ? habit.name : "";
+  formColor = habit ? habit.color : PALETTE[0];
+  formIcon = habit ? habit.icon : ICONS[0];
+
+  document.getElementById("swatchGrid").innerHTML = PALETTE.map(c => `
+    <div class="swatch ${c === formColor ? "selected" : ""}" style="background:${c}"
+      onclick="selectColor('${c}')"></div>`).join("");
+
+  document.getElementById("iconGrid").innerHTML = ICONS.map(ic => `
+    <div class="icon-cell ${ic === formIcon ? "selected" : ""}" style="${ic === formIcon ? `background:${formColor};color:#0F172A` : ""}"
+      onclick="selectIcon('${ic}')">${ic}</div>`).join("");
+
+  document.getElementById("formOverlay").classList.add("open");
+}
+function selectColor(c) {
+  formColor = c;
+  openFormRefresh();
+}
+function selectIcon(ic) {
+  formIcon = ic;
+  openFormRefresh();
+}
+function openFormRefresh() {
+  document.getElementById("swatchGrid").innerHTML = PALETTE.map(c => `
+    <div class="swatch ${c === formColor ? "selected" : ""}" style="background:${c}"
+      onclick="selectColor('${c}')"></div>`).join("");
+  document.getElementById("iconGrid").innerHTML = ICONS.map(ic => `
+    <div class="icon-cell ${ic === formIcon ? "selected" : ""}" style="${ic === formIcon ? `background:${formColor};color:#0F172A` : ""}"
+      onclick="selectIcon('${ic}')">${ic}</div>`).join("");
+}
+function closeForm() {
+  document.getElementById("formOverlay").classList.remove("open");
+}
+function saveHabit() {
+  const name = document.getElementById("nameInput").value.trim();
+  if (!name) return;
+  if (editingHabitId) {
+    const h = habits.find(h => h.id === editingHabitId);
+    h.name = name; h.color = formColor; h.icon = formIcon;
+  } else {
+    habits.push({ id: Date.now().toString(), name, icon: formIcon, color: formColor, createdAt: new Date() });
+  }
+  closeForm();
+  render();
+}
+
+// ---- Detail ----
+function openDetail(id) {
+  currentDetailId = id;
+  detailMonth = new Date();
+  renderDetail();
+  document.getElementById("detailOverlay").classList.add("open");
+}
+function closeDetail() {
+  document.getElementById("detailOverlay").classList.remove("open");
+}
+function changeMonth(delta) {
+  detailMonth.setMonth(detailMonth.getMonth() + delta);
+  renderDetail();
+}
+function deleteHabit() {
+  habits = habits.filter(h => h.id !== currentDetailId);
+  delete completions[currentDetailId];
+  closeDetail();
+  render();
+}
+function renderDetail() {
+  const h = habits.find(h => h.id === currentDetailId);
+  if (!h) return;
+  const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  // calendar grid
+  const firstDay = new Date(detailMonth.getFullYear(), detailMonth.getMonth(), 1);
+  const startWd = (firstDay.getDay() + 6) % 7; // Monday-first
+  const daysInMonth = new Date(detailMonth.getFullYear(), detailMonth.getMonth() + 1, 0).getDate();
+  let cells = "";
+  for (let i = 0; i < startWd; i++) cells += `<div></div>`;
+  for (let day = 1; day <= daysInMonth; day++) {
+    const d = new Date(detailMonth.getFullYear(), detailMonth.getMonth(), day);
+    const isToday = d.getTime() === today.getTime();
+    const isFuture = d > today;
+    const done = isCompleted(h.id, d);
+    cells += `
+      <div class="cal-day ${isToday ? "today" : ""} ${isFuture ? "future" : ""}"
+        style="${done ? `background:${h.color};color:#0F172A;font-weight:700` : ""}; ${isToday ? `border-color:${h.color}` : ""}"
+        onclick="${isFuture ? "" : `toggle('${h.id}', new Date(${d.getTime()})); renderDetail();`}">${day}</div>`;
+  }
+
+  document.getElementById("detailSheet").innerHTML = `
+    <div class="sheet-header">
+      <button onclick="closeDetail()">Close</button>
+      <span class="sheet-title">Details</span>
+      <button onclick="openForm(habits.find(x=>x.id==='${h.id}')); closeDetail();">✎ Edit</button>
+    </div>
+    <div class="header-box">
+      <div class="icon-box" style="background:${h.color}33; color:${h.color}; font-size:24px">${h.icon}</div>
+      <div>
+        <div style="font-size:22px;font-weight:800">${h.name}</div>
+        <div style="font-size:13px;color:var(--text-faint);margin-top:4px">Created on ${h.createdAt.toLocaleDateString()}</div>
+      </div>
+    </div>
+    <div class="stat-row">
+      <div class="stat-box"><div style="color:${h.color}">🔥</div><div class="val">${currentStreak(h.id)}</div><div class="lbl">Day Streak</div></div>
+      <div class="stat-box"><div style="color:${h.color}">📅</div><div class="val">${monthCount(h.id, detailMonth)}</div><div class="lbl">This Month</div></div>
+      <div class="stat-box"><div style="color:${h.color}">✅</div><div class="val">${completions[h.id]?.size ?? 0}</div><div class="lbl">Total Done</div></div>
+    </div>
+    <div class="cal-wrap">
+      <div class="cal-head">
+        <span style="font-weight:700;font-size:18px">Calendar</span>
+        <div style="display:flex;align-items:center;gap:12px">
+          <button class="nav-btn" onclick="changeMonth(-1)">‹</button>
+          <span style="font-weight:600;font-size:15px">${monthNames[detailMonth.getMonth()]} ${detailMonth.getFullYear()}</span>
+          <button class="nav-btn" onclick="changeMonth(1)">›</button>
         </div>
       </div>
-    `;
-  }
-
-  function renderDetailOverlay() {
-    const habit = state.habits.find(h => h.id === state.openHabitId);
-    if (!habit) return "";
-
-    const month = state.viewMonth;
-    const monthLabel = MONTHS[month.getMonth()] + " " + month.getFullYear();
-    const isCurrentMonth = month.getFullYear() === new Date().getFullYear() && month.getMonth() === new Date().getMonth();
-
-    const firstOfMonth = new Date(month.getFullYear(), month.getMonth(), 1);
-    const daysInMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
-    const startWeekday = (firstOfMonth.getDay() + 6) % 7; 
-
-    let cells = "";
-    for (let i = 0; i < startWeekday; i++) cells += `<div class="day-cell"></div>`;
-    for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(month.getFullYear(), month.getMonth(), day);
-      const done = isDone(habit.id, date);
-      const future = isFuture(date);
-      const today = isSameDay(date, new Date());
-      const burst = state.burstKey === (habit.id + "|" + toKey(date));
-      cells += `
-        <div class="day-cell">
-          <button class="day-btn ${done ? "done" : ""} ${today ? "today" : ""} ${burst ? "burst" : ""}"
-            data-toggle-day="${toKey(date)}" ${future ? "disabled" : ""}
-            style="--card-color:${habit.color}">${day}</button>
-        </div>
-      `;
-    }
-
-    return `
-      <div class="overlay" id="detailOverlay">
-        <div class="detail-modal" style="--card-color:${habit.color}">
-          <div class="detail-header">
-            <div class="detail-title">
-              <div class="habit-icon" style="background:${habit.color}25; color:${habit.color};">${renderIcon(habit.icon)}</div>
-              <h2>${esc(habit.name)}</h2>
-            </div>
-            <div class="detail-header-actions">
-              <button class="icon-btn" id="editHabitBtn" title="Edit">${renderIcon('edit')}</button>
-              <button class="icon-btn danger" id="deleteHabitBtn" title="Delete">${renderIcon('delete')}</button>
-              <button class="icon-btn" id="closeDetailBtn" title="Close">${renderIcon('close')}</button>
-            </div>
-          </div>
-
-          <div class="stat-row">
-            <div class="stat-box"><div class="val">${currentStreak(habit.id)}</div><div class="lbl">Streak</div></div>
-            <div class="stat-box"><div class="val">${monthCount(habit.id, month)}</div><div class="lbl">This Month</div></div>
-            <div class="stat-box"><div class="val">${(state.completions[habit.id] || []).length}</div><div class="lbl">Total</div></div>
-          </div>
-
-          <div>
-            <div class="month-nav">
-              <button data-month="-1">‹</button>
-              <span class="title">${monthLabel}</span>
-              <button data-month="1" ${isCurrentMonth ? "disabled" : ""}>›</button>
-            </div>
-            <div class="weekday-row">${WEEKDAYS.map(w => `<span>${w}</span>`).join("")}</div>
-            <div class="day-grid">${cells}</div>
-          </div>
-        </div>
+      <div class="cal-grid">
+        ${["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map(w => `<div class="cal-wd">${w}</div>`).join("")}
+        ${cells}
       </div>
+    </div>
+    <button class="delete-btn" onclick="deleteHabit()">Delete Habit</button>
+  `;
+}
 
-      ${state.confirmDeleteId === habit.id ? renderDeleteConfirm(habit) : ""}
-    `;
-  }
-
-  function renderDeleteConfirm(habit) {
-    return `
-      <div class="overlay" id="deleteOverlay">
-        <div class="modal" style="max-width:360px;">
-          <h3>Delete "${esc(habit.name)}"?</h3>
-          <p class="confirm-text">All completed days recorded for this habit will be permanently deleted.</p>
-          <div class="modal-actions">
-            <button class="btn-ghost" id="cancelDelete">Cancel</button>
-            <button class="btn-primary" id="confirmDelete" style="background:#EF4444; color:white;">Delete</button>
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
-  function renderModal() {
-    const draft = state.editingHabit;
-    const isEdit = state.modal === "edit";
-    return `
-      <div class="overlay" id="addOverlay">
-        <div class="modal">
-          <h3>${isEdit ? "Edit Habit" : "New Habit"}</h3>
-          <label class="field-label">Name</label>
-          <input class="name-input" id="habitTitleInput" name="habit-title" placeholder="e.g., Drink water" value="${esc(draft.name)}"
-            autocomplete="off" autocorrect="off" autocapitalize="sentences" spellcheck="false"
-            data-lpignore="true" data-1p-ignore autofocus />
-
-          <label class="field-label">Choose Color</label>
-          <div class="swatch-row">
-            ${COLORS.map(c => `
-              <div class="swatch-wrap ${draft.color === c ? "selected" : ""}" data-color="${c}" style="--sw-color:${c}">
-                <div class="swatch" style="background:${c}"></div>
-              </div>
-            `).join("")}
-          </div>
-
-          <label class="field-label">Choose Icon</label>
-          <div class="icon-grid" style="--sel-color-soft:${draft.color}25; --sel-color:${draft.color};">
-            ${HABIT_ICONS.map(key => `<button class="icon-choice ${draft.icon === key ? "selected" : ""}" data-icon="${key}">${renderIcon(key)}</button>`).join("")}
-          </div>
-
-          <div class="modal-actions">
-            <button class="btn-ghost" id="cancelAdd">Cancel</button>
-            <button class="btn-primary" id="saveAdd" ${draft.name.trim() ? "" : "disabled"}>${isEdit ? "Save" : "Create"}</button>
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
-  // ---------- Events ----------
-  function attachEvents() {
-    const openAdd = document.getElementById("openAdd");
-    if (openAdd) openAdd.addEventListener("click", () => {
-      state.modal = "add";
-      state.editingHabit = { name: "", color: getNextColor(), icon: HABIT_ICONS[0] };
-      render();
-      const input = document.getElementById("habitTitleInput");
-      if (input) input.focus();
-    });
-
-    document.querySelectorAll(".habit-card").forEach((card) => {
-      const index = parseInt(card.getAttribute("data-index"), 10);
-
-      // Open detail modal when clicking card (and not dragging)
-      card.addEventListener("click", (e) => {
-        if (isDragging) return;
-        state.openHabitId = card.getAttribute("data-open");
-        state.viewMonth = startOfMonth(new Date());
-        state.confirmDeleteId = null;
-        render();
-      });
-
-      // Drag & Drop event handlers
-      card.addEventListener("dragstart", (e) => {
-        draggedIndex = index;
-        isDragging = true;
-        e.dataTransfer.effectAllowed = "move";
-        e.dataTransfer.setData("text/plain", index);
-        card.classList.add("dragging");
-      });
-
-      card.addEventListener("dragend", () => {
-        card.classList.remove("dragging");
-        document.querySelectorAll(".habit-card").forEach(c => c.classList.remove("drag-over"));
-        setTimeout(() => { isDragging = false; }, 50);
-      });
-
-      card.addEventListener("dragover", (e) => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = "move";
-        if (draggedIndex === null || draggedIndex === index) return;
-        card.classList.add("drag-over");
-      });
-
-      card.addEventListener("dragleave", () => {
-        card.classList.remove("drag-over");
-      });
-
-      card.addEventListener("drop", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        card.classList.remove("drag-over");
-        if (draggedIndex === null || draggedIndex === index) return;
-
-        const movedItem = state.habits.splice(draggedIndex, 1)[0];
-        state.habits.splice(index, 0, movedItem);
-        state.habits.forEach((h, i) => db.run("UPDATE habits SET position = ? WHERE id = ?", [i, h.id]));
-
-        draggedIndex = null;
-        persist();
-        render();
-      });
-    });
-
-    document.querySelectorAll("[data-quick-check]").forEach(el => {
-      el.addEventListener("click", (e) => {
-        e.stopPropagation();
-        toggleDay(el.getAttribute("data-quick-check"), new Date());
-      });
-    });
-
-    document.querySelectorAll("[data-toggle-day]").forEach(el => {
-      el.addEventListener("click", () => {
-        const key = el.getAttribute("data-toggle-day");
-        const [y, m, d] = key.split("-").map(Number);
-        toggleDay(state.openHabitId, new Date(y, m - 1, d));
-      });
-    });
-
-    document.querySelectorAll("[data-month]").forEach(el => {
-      el.addEventListener("click", () => {
-        const delta = parseInt(el.getAttribute("data-month"), 10);
-        state.viewMonth = addMonths(state.viewMonth, delta);
-        render();
-      });
-    });
-
-    const closeDetailBtn = document.getElementById("closeDetailBtn");
-    if (closeDetailBtn) closeDetailBtn.addEventListener("click", () => {
-      state.openHabitId = null;
-      render();
-    });
-    const detailOverlay = document.getElementById("detailOverlay");
-    if (detailOverlay) detailOverlay.addEventListener("click", (e) => {
-      if (e.target === detailOverlay) {
-        state.openHabitId = null;
-        render();
-      }
-    });
-
-    const editBtn = document.getElementById("editHabitBtn");
-    if (editBtn) editBtn.addEventListener("click", () => {
-      const habit = state.habits.find(h => h.id === state.openHabitId);
-      if (!habit) return;
-      state.modal = "edit";
-      state.editingHabit = { id: habit.id, name: habit.name, color: habit.color, icon: habit.icon };
-      render();
-      const input = document.getElementById("habitTitleInput");
-      if (input) { input.focus(); input.select(); }
-    });
-
-    const deleteBtn = document.getElementById("deleteHabitBtn");
-    if (deleteBtn) deleteBtn.addEventListener("click", () => {
-      state.confirmDeleteId = state.openHabitId;
-      render();
-    });
-    const cancelDelete = document.getElementById("cancelDelete");
-    if (cancelDelete) cancelDelete.addEventListener("click", () => {
-      state.confirmDeleteId = null;
-      render();
-    });
-    const confirmDelete = document.getElementById("confirmDelete");
-    if (confirmDelete) confirmDelete.addEventListener("click", () => {
-      deleteHabit(state.confirmDeleteId);
-      state.openHabitId = null;
-      state.confirmDeleteId = null;
-      render();
-    });
-
-    const nameInput = document.getElementById("habitTitleInput");
-    if (nameInput) {
-      nameInput.addEventListener("input", (e) => {
-        state.editingHabit.name = e.target.value;
-        const saveBtn = document.getElementById("saveAdd");
-        if (saveBtn) saveBtn.disabled = !state.editingHabit.name.trim();
-      });
-      nameInput.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" && state.editingHabit.name.trim()) {
-          saveHabitForm();
-        }
-      });
-    }
-    const addOverlay = document.getElementById("addOverlay");
-    if (addOverlay) addOverlay.addEventListener("click", (e) => {
-      if (e.target === addOverlay) {
-        state.modal = null;
-        state.editingHabit = null;
-        render();
-      }
-    });
-    document.querySelectorAll("[data-color]").forEach(el => {
-      el.addEventListener("click", () => {
-        state.editingHabit.color = el.getAttribute("data-color");
-        render();
-      });
-    });
-    document.querySelectorAll("[data-icon]").forEach(el => {
-      el.addEventListener("click", () => {
-        state.editingHabit.icon = el.getAttribute("data-icon");
-        render();
-      });
-    });
-    const cancelAdd = document.getElementById("cancelAdd");
-    if (cancelAdd) cancelAdd.addEventListener("click", () => {
-      state.modal = null;
-      state.editingHabit = null;
-      render();
-    });
-    const saveAdd = document.getElementById("saveAdd");
-    if (saveAdd) saveAdd.addEventListener("click", saveHabitForm);
-  }
-
-  loadData();
-})();
+render();
 </script>
 </body>
 </html>
