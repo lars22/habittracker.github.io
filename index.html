@@ -52,7 +52,7 @@
             display: flex;
             flex-direction: column;
             position: relative;
-            padding: 20px 16px 100px 16px;
+            padding: 20px 16px 120px 16px; /* Unten mehr Platz für den letzten Habit & Delete Button */
             overflow-x: hidden;
         }
 
@@ -196,7 +196,7 @@
             cursor: grab;
             transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease, background-color 0.2s ease;
             width: 100%;
-            touch-action: none; /* Wichtig für flüssiges Touch-Dragging */
+            touch-action: none;
         }
 
         .habit-card:active {
@@ -337,7 +337,7 @@
             box-shadow: 0 6px 12px rgba(99, 102, 241, 0.4);
         }
 
-        /* MODALS */
+        /* MODALS (Identische Höhe wie Habit ändern: max-height: 90vh) */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -364,7 +364,8 @@
         .modal-card {
             width: 100%;
             max-width: 480px;
-            max-height: 90vh;
+            max-height: 90vh; /* Exakt gleiche Höhe */
+            height: auto;
             background: var(--bg-main);
             border-top-left-radius: 24px;
             border-top-right-radius: 24px;
@@ -392,6 +393,18 @@
         .modal-header h2 {
             font-size: 17px;
             font-weight: 600;
+            flex: 1;
+            text-align: center; /* Titel immer in der Mitte */
+        }
+
+        /* Flexbox-Trick, damit der mittlere Titel zentriert bleibt, auch wenn links/rechts Buttons sind */
+        .modal-header > *:first-child {
+            flex: 0 0 70px;
+            text-align: left;
+        }
+        .modal-header > *:last-child {
+            flex: 0 0 70px;
+            text-align: right;
         }
 
         .modal-header button {
@@ -404,7 +417,7 @@
         }
 
         .modal-body {
-            padding: 20px;
+            padding: 20px 20px 40px 20px; /* Unten großzügig gepolstert fürs Scrollen */
             overflow-y: auto;
             overflow-x: hidden;
             display: flex;
@@ -657,7 +670,7 @@
             <header>
                 <h1>My Habits</h1>
                 <div class="header-actions">
-                    <button class="logout-btn" onclick="openAccountModal()" title="Account Settings">
+                    <button class="logout-btn" onclick="openAccountModal()" title="Account">
                         <i class="fa-solid fa-user"></i>
                     </button>
                     <button class="logout-btn" onclick="handleLogout()" title="Logout">
@@ -717,12 +730,12 @@
         </div>
     </div>
 
-    <!-- MODAL: ACCOUNT SETTINGS -->
+    <!-- MODAL: ACCOUNT -->
     <div id="accountModal" class="modal-overlay">
         <div class="modal-card">
             <div class="modal-header">
                 <button onclick="closeModal('accountModal')">Cancel</button>
-                <h2>Account Settings</h2>
+                <h2>Account</h2>
                 <div></div>
             </div>
             <div class="modal-body">
@@ -1097,17 +1110,15 @@
 
                 // --- TOUCH / MOBILE DRAG & DROP ---
                 let touchStartY = 0;
-                let initialCardTop = 0;
                 let clone = null;
 
                 card.addEventListener("touchstart", (e) => {
-                    if (e.target.closest('button')) return; // Klicks auf Buttons nicht blockieren
+                    if (e.target.closest('button')) return;
                     touchStartY = e.touches[0].clientY;
                     
                     const timer = setTimeout(() => {
                         card.classList.add("dragging");
                         
-                        // Klon für visuelles Feedback beim Ziehen erstellen
                         clone = card.cloneNode(true);
                         clone.style.position = "fixed";
                         clone.style.width = card.offsetWidth + "px";
@@ -1117,7 +1128,7 @@
                         clone.style.opacity = "0.9";
                         clone.style.pointerEvents = "none";
                         document.body.appendChild(clone);
-                    }, 200); // 200ms Halte-Dauer zum Aktivieren
+                    }, 200);
 
                     card.dataset.touchTimer = timer;
                 }, { passive: true });
@@ -1135,7 +1146,6 @@
                         clone.style.transform = `translateY(${diffY}px)`;
                     }
 
-                    // Zielelement unter dem Finger finden
                     const elemBelow = document.elementFromPoint(window.innerWidth / 2, currentY);
                     const targetCard = elemBelow ? elemBelow.closest(".habit-card") : null;
 
