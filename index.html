@@ -26,6 +26,11 @@
             user-select: none;
         }
 
+        html {
+            /* Verhindert das Bouncen/Verschieben der ganzen Seite auf iOS & Android */
+            overscroll-behavior: none;
+        }
+
         body {
             background-color: var(--bg-main);
             color: #ffffff;
@@ -33,6 +38,8 @@
             justify-content: center;
             min-height: 100vh;
             overflow-x: hidden;
+            overscroll-behavior-y: none;
+            touch-action: manipulation;
         }
 
         .app-container {
@@ -258,7 +265,7 @@
             gap: 3px;
             font-size: 12px;
             font-weight: 700;
-            margin-left: 8px; /* Ganz leicht nach rechts verschoben */
+            margin-left: 8px;
         }
 
         .streak-badge i {
@@ -1203,7 +1210,7 @@
                         <i class="fa-solid fa-circle-check" style="color: ${habit.colorHex}"></i>
                         <span class="stat-val">${totalCount}</span>
                         <span class="stat-lbl">GESAMT</span>
-            </div>
+                    </div>
                 </div>
 
                 ${renderCalendarHTML(habit)}
