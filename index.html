@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>My Habits</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Supabase JS Client -->
+    <!-- Supabase JS Client v2 -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -63,7 +63,7 @@
             background: var(--bg-card);
             border: 1px solid var(--border-color);
             color: var(--text-sub);
-            padding: 8px 12px;
+            padding: 8px 14px;
             border-radius: 12px;
             font-size: 13px;
             cursor: pointer;
@@ -75,7 +75,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            margin-top: 100px;
+            margin-top: 80px;
             gap: 16px;
             text-align: center;
         }
@@ -299,7 +299,7 @@
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 24px;
+            gap: 20px;
         }
 
         .form-group {
@@ -520,7 +520,6 @@
             gap: 8px;
             background: rgba(239, 68, 68, 0.15);
             color: #EF4444;
-            margin-top: 6px;
         }
 
         .auth-btn-full {
@@ -533,6 +532,13 @@
             cursor: pointer;
             background: linear-gradient(to right, var(--accent-primary), var(--accent-secondary));
             color: white;
+        }
+
+        .auth-error {
+            color: #EF4444;
+            font-size: 13px;
+            text-align: center;
+            display: none;
         }
     </style>
 </head>
@@ -559,20 +565,21 @@
         <div class="modal-card">
             <div class="modal-header">
                 <button onclick="closeModal('authModal')">Abbrechen</button>
-                <h2 id="authTitle">Login / Register</h2>
+                <h2>Account Login</h2>
                 <div></div>
             </div>
             <div class="modal-body">
+                <div id="authErrorMsg" class="auth-error"></div>
                 <div class="form-group">
                     <span class="form-label">E-MAIL</span>
-                    <input type="email" id="authEmail" class="form-input" placeholder="name@example.com">
+                    <input type="email" id="authEmail" class="form-input" placeholder="deine@email.de">
                 </div>
                 <div class="form-group">
                     <span class="form-label">PASSWORT</span>
                     <input type="password" id="authPassword" class="form-input" placeholder="••••••••">
                 </div>
                 <button class="auth-btn-full bouncy" onclick="login()">Anmelden</button>
-                <button class="delete-btn-full bouncy" style="background: rgba(255, 255, 255, 0.05); color: #fff;" onclick="signUp()">Konto erstellen</button>
+                <button class="delete-btn-full bouncy" style="background: rgba(255, 255, 255, 0.05); color: #fff;" onclick="signUp()">Neues Konto erstellen</button>
             </div>
         </div>
     </div>
@@ -581,18 +588,18 @@
     <div id="formModal" class="modal-overlay">
         <div class="modal-card">
             <div class="modal-header">
-                <button onclick="closeModal('formModal')">Cancel</button>
+                <button onclick="closeModal('formModal')">Abbrechen</button>
                 <h2 id="formModalTitle">New Habit</h2>
-                <button onclick="saveHabitForm()">Save</button>
+                <button onclick="saveHabitForm()">Speichern</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
                     <span class="form-label">NAME</span>
-                    <input type="text" id="habitNameInput" class="form-input" placeholder="e.g. Drink 2L Water">
+                    <input type="text" id="habitNameInput" class="form-input" placeholder="z. B. 2L Wasser trinken">
                 </div>
 
                 <div class="form-group">
-                    <span class="form-label">COLOR</span>
+                    <span class="form-label">FARBE</span>
                     <div class="color-grid" id="colorGrid"></div>
                 </div>
 
@@ -608,19 +615,21 @@
     <div id="detailModal" class="modal-overlay">
         <div class="modal-card">
             <div class="modal-header">
-                <button onclick="closeModal('detailModal')">Close</button>
+                <button onclick="closeModal('detailModal')">Schließen</button>
                 <h2>Details</h2>
-                <button onclick="openEditModal(selectedHabitForDetail)">Edit</button>
+                <button onclick="openEditModal(selectedHabitForDetail)">Bearbeiten</button>
             </div>
             <div class="modal-body" id="detailModalContent"></div>
         </div>
     </div>
 
     <script>
-        // SUPABASE CONFIGURATION
+        // SUPABASE KONFIGURATION
         const SUPABASE_URL = "https://rfcclktwfzyihcjjpiya.supabase.co";
         const SUPABASE_ANON_KEY = "sb_publishable_5URf8UCOBdWpVxcA0VSAbw_2NO4jzan";
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // Verwende den Variablennamen supabaseClient, um Konflikte zu vermeiden
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         const iconMapping = {
             "drop.fill": "fa-droplet",
@@ -671,10 +680,10 @@
         ];
 
         const availableIcons = Object.keys(iconMapping);
-        const shortWeekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+        const shortWeekdays = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
 
         let habits = [];
-        let completions = {}; // { habitId: Set of "YYYY-MM-DD" }
+        let completions = {};
         let currentUser = null;
         let selectedHabitForEdit = null;
         let selectedHabitForDetail = null;
@@ -684,14 +693,18 @@
         let formIcon = "drop.fill";
 
         async function initApp() {
-            const { data: { session } } = await supabase.auth.getSession();
-            updateUserSession(session?.user || null);
-
-            supabase.auth.onAuthStateChange((_event, session) => {
-                updateUserSession(session?.user || null);
-            });
-
             setupFormSelectors();
+
+            try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                updateUserSession(session?.user || null);
+
+                supabaseClient.auth.onAuthStateChange((_event, session) => {
+                    updateUserSession(session?.user || null);
+                });
+            } catch (e) {
+                console.error("Supabase Init Fehler:", e);
+            }
         }
 
         function updateUserSession(user) {
@@ -711,13 +724,13 @@
         async function loadDataFromSupabase() {
             if (!currentUser) return;
 
-            const { data: habitsData, error: habitsErr } = await supabase
+            const { data: habitsData, error: habitsErr } = await supabaseClient
                 .from('habits')
                 .select('*')
                 .order('created_at', { ascending: true });
 
             if (habitsErr) {
-                console.error(habitsErr);
+                console.error("Habits Fetch Fehler:", habitsErr);
                 return;
             }
 
@@ -729,12 +742,12 @@
                 createdAt: h.created_at
             }));
 
-            const { data: compData, error: compErr } = await supabase
+            const { data: compData, error: compErr } = await supabaseClient
                 .from('completions')
                 .select('*');
 
             if (compErr) {
-                console.error(compErr);
+                console.error("Completions Fetch Fehler:", compErr);
                 return;
             }
 
@@ -807,19 +820,20 @@
 
             if (completions[habitId].has(dateStr)) {
                 completions[habitId].delete(dateStr);
-                await supabase
+                renderHabitList();
+                await supabaseClient
                     .from('completions')
                     .delete()
                     .eq('habit_id', habitId)
                     .eq('completed_date', dateStr);
             } else {
                 completions[habitId].add(dateStr);
-                await supabase
+                renderHabitList();
+                await supabaseClient
                     .from('completions')
                     .insert({ habit_id: habitId, completed_date: dateStr });
             }
 
-            renderHabitList();
             if (selectedHabitForDetail && selectedHabitForDetail.id === habitId) {
                 renderDetailContent();
             }
@@ -849,7 +863,7 @@
                 container.innerHTML = `
                     <div class="empty-state">
                         <i class="fa-solid fa-lock"></i>
-                        <p>Bitte melde dich an,<br>um deine Habits zu verwalten.</p>
+                        <p>Bitte melde dich an,<br>um deine Habits zu sehen.</p>
                     </div>
                 `;
                 return;
@@ -859,7 +873,7 @@
                 container.innerHTML = `
                     <div class="empty-state">
                         <i class="fa-solid fa-wand-magic-sparkles"></i>
-                        <p>No habits found.<br>Start building your routine!</p>
+                        <p>Keine Habits vorhanden.<br>Erstelle jetzt deinen ersten!</p>
                     </div>
                 `;
                 return;
@@ -929,30 +943,58 @@
             });
         }
 
-        // AUTH HANDLERS
         function handleAuthClick() {
             if (currentUser) {
-                supabase.auth.signOut();
+                supabaseClient.auth.signOut();
             } else {
+                showAuthError("");
                 openModal("authModal");
             }
         }
 
+        function showAuthError(msg) {
+            const errBox = document.getElementById("authErrorMsg");
+            if (msg) {
+                errBox.innerText = msg;
+                errBox.style.display = "block";
+            } else {
+                errBox.style.display = "none";
+            }
+        }
+
         async function login() {
+            showAuthError("");
             const email = document.getElementById("authEmail").value;
             const password = document.getElementById("authPassword").value;
-            const { error } = await supabase.auth.signInWithPassword({ email, password });
-            if (error) alert(error.message);
-            else closeModal("authModal");
+            
+            if (!email || !password) {
+                showAuthError("Bitte E-Mail und Passwort eingeben.");
+                return;
+            }
+
+            const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+            if (error) {
+                showAuthError(error.message);
+            } else {
+                closeModal("authModal");
+            }
         }
 
         async function signUp() {
+            showAuthError("");
             const email = document.getElementById("authEmail").value;
             const password = document.getElementById("authPassword").value;
-            const { error } = await supabase.auth.signUp({ email, password });
-            if (error) alert(error.message);
-            else {
-                alert("Registrierung erfolgreich! Überprüfe deine E-Mails zur Bestätigung.");
+
+            if (!email || !password) {
+                showAuthError("Bitte E-Mail und Passwort eingeben.");
+                return;
+            }
+
+            const { error } = await supabaseClient.auth.signUp({ email, password });
+            if (error) {
+                showAuthError(error.message);
+            } else {
+                alert("Konto erstellt! Du kannst dich jetzt einloggen.");
                 closeModal("authModal");
             }
         }
@@ -990,11 +1032,12 @@
 
         function openAddModal() {
             if (!currentUser) {
+                showAuthError("");
                 openModal("authModal");
                 return;
             }
             selectedHabitForEdit = null;
-            document.getElementById("formModalTitle").innerText = "New Habit";
+            document.getElementById("formModalTitle").innerText = "Neues Habit";
             document.getElementById("habitNameInput").value = "";
             formColor = "#EE8172";
             formIcon = "drop.fill";
@@ -1004,7 +1047,7 @@
 
         function openEditModal(habit) {
             selectedHabitForEdit = habit;
-            document.getElementById("formModalTitle").innerText = "Edit Habit";
+            document.getElementById("formModalTitle").innerText = "Habit bearbeiten";
             document.getElementById("habitNameInput").value = habit.name;
             formColor = habit.colorHex;
             formIcon = habit.icon;
@@ -1018,12 +1061,12 @@
             if (!name || !currentUser) return;
 
             if (selectedHabitForEdit) {
-                await supabase
+                await supabaseClient
                     .from('habits')
                     .update({ name: name, color_hex: formColor, icon: formIcon })
                     .eq('id', selectedHabitForEdit.id);
             } else {
-                await supabase
+                await supabaseClient
                     .from('habits')
                     .insert({ name: name, icon: formIcon, color_hex: formColor, user_id: currentUser.id });
             }
@@ -1045,7 +1088,7 @@
 
             const content = document.getElementById("detailModalContent");
             const faIcon = iconMapping[habit.icon] || "fa-star";
-            const createdDate = new Date(habit.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+            const createdDate = new Date(habit.createdAt).toLocaleDateString("de-DE", { month: "short", day: "numeric", year: "numeric" });
 
             const streak = currentStreak(habit.id);
             const thisMonth = monthCount(habit.id, selectedDetailMonthDate);
@@ -1058,7 +1101,7 @@
                     </div>
                     <div class="detail-info-text">
                         <h3>${escapeHtml(habit.name)}</h3>
-                        <p>Created on ${createdDate}</p>
+                        <p>Erstellt am ${createdDate}</p>
                     </div>
                 </div>
 
@@ -1066,26 +1109,26 @@
                     <div class="stat-box">
                         <i class="fa-solid fa-fire" style="color: ${habit.colorHex}"></i>
                         <span class="stat-val">${streak}</span>
-                        <span class="stat-lbl">Day Streak</span>
+                        <span class="stat-lbl">Tage Streak</span>
                     </div>
                     <div class="stat-box">
                         <i class="fa-regular fa-calendar" style="color: ${habit.colorHex}"></i>
                         <span class="stat-val">${thisMonth}</span>
-                        <span class="stat-lbl">This Month</span>
+                        <span class="stat-lbl">Diesen Monat</span>
                     </div>
                     <div class="stat-box">
                         <i class="fa-solid fa-certificate" style="color: ${habit.colorHex}"></i>
                         <span class="stat-val">${totalDone}</span>
-                        <span class="stat-lbl">Total Done</span>
+                        <span class="stat-lbl">Gesamt</span>
                     </div>
                 </div>
 
                 <div class="calendar-box">
                     <div class="calendar-nav">
-                        <h4>Calendar Overview</h4>
+                        <h4>Kalender Übersicht</h4>
                         <div class="calendar-controls">
                             <button onclick="changeDetailMonth(-1)"><i class="fa-solid fa-chevron-left"></i></button>
-                            <span class="month-title">${selectedDetailMonthDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}</span>
+                            <span class="month-title">${selectedDetailMonthDate.toLocaleDateString("de-DE", { month: "long", year: "numeric" })}</span>
                             <button onclick="changeDetailMonth(1)"><i class="fa-solid fa-chevron-right"></i></button>
                         </div>
                     </div>
@@ -1093,7 +1136,7 @@
                 </div>
 
                 <button class="delete-btn-full bouncy" onclick="deleteCurrentHabit()">
-                    <i class="fa-solid fa-trash"></i> Delete Habit
+                    <i class="fa-solid fa-trash"></i> Habit löschen
                 </button>
             `;
         }
@@ -1104,7 +1147,7 @@
         }
 
         function generateCalendarGridHTML(habit, date) {
-            const daysInWeekHeader = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+            const daysInWeekHeader = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
             let html = `<div class="calendar-grid">`;
 
             daysInWeekHeader.forEach(d => {
@@ -1153,8 +1196,8 @@
 
         async function deleteCurrentHabit() {
             if (!selectedHabitForDetail) return;
-            if (confirm(`Delete habit '${selectedHabitForDetail.name}'?`)) {
-                await supabase
+            if (confirm(`Möchtest du das Habit '${selectedHabitForDetail.name}' wirklich löschen?`)) {
+                await supabaseClient
                     .from('habits')
                     .delete()
                     .eq('id', selectedHabitForDetail.id);
