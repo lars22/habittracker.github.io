@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -27,7 +27,6 @@
         }
 
         html {
-            /* Seitliches Scrollen absolut verbieten */
             overflow-x: hidden;
             width: 100%;
             height: 100%;
@@ -41,10 +40,9 @@
             justify-content: center;
             width: 100%;
             min-height: 100dvh;
-            /* Ermöglicht Scrollen NUR wenn der Inhalt wirklich zu lang ist */
             overflow-y: auto;
             overflow-x: hidden;
-            touch-action: pan-y; /* Erlaubt nur vertikale Touch-Gesten */
+            touch-action: pan-y;
             -webkit-overflow-scrolling: touch;
         }
 
@@ -143,6 +141,12 @@
             letter-spacing: -0.5px;
         }
 
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+
         .logout-btn {
             background: none;
             border: none;
@@ -178,6 +182,7 @@
             flex-direction: column;
             gap: 14px;
             width: 100%;
+            position: relative;
         }
 
         .habit-card {
@@ -189,8 +194,9 @@
             gap: 12px;
             border: 1px solid var(--border-color);
             cursor: grab;
-            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease;
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease, background-color 0.2s ease;
             width: 100%;
+            touch-action: none; /* Wichtig für flüssiges Touch-Dragging */
         }
 
         .habit-card:active {
@@ -198,8 +204,12 @@
         }
 
         .habit-card.dragging {
-            opacity: 0.4;
-            transform: scale(0.98);
+            opacity: 0.85;
+            background-color: #2D3748;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            z-index: 1000;
+            transform: scale(1.02);
+            position: relative;
         }
 
         .bouncy {
@@ -227,7 +237,7 @@
             flex-direction: column;
             gap: 8px;
             flex-grow: 1;
-            min-width: 0; /* Verhindert horizontales Überstehen bei langem Text */
+            min-width: 0;
         }
 
         .habit-name {
@@ -242,7 +252,7 @@
         .week-row {
             display: flex;
             align-items: center;
-            gap: 7px;
+            gap: 10px;
         }
 
         .day-col {
@@ -624,21 +634,21 @@
         <div id="authScreen">
             <h1 style="text-align: center; margin-bottom: 8px;">My Habits</h1>
             <div class="auth-card">
-                <h2 class="auth-title" id="authTitle">Registrieren</h2>
+                <h2 class="auth-title" id="authTitle">Sign Up</h2>
                 
                 <div id="authMessage" class="auth-message"></div>
 
                 <div class="form-group">
-                    <span class="form-label">E-MAIL</span>
-                    <input type="email" id="loginEmail" class="form-input" placeholder="deine@email.de" required>
+                    <span class="form-label">EMAIL</span>
+                    <input type="email" id="loginEmail" class="form-input" placeholder="your@email.com" required>
                 </div>
                 <div class="form-group">
-                    <span class="form-label">PASSWORT</span>
-                    <input type="password" id="loginPassword" class="form-input" placeholder="mind. 6 Zeichen" required minlength="6">
+                    <span class="form-label">PASSWORD</span>
+                    <input type="password" id="loginPassword" class="form-input" placeholder="min. 6 characters" required minlength="6">
                 </div>
                 
-                <button class="btn-primary bouncy" id="authSubmitBtn" onclick="handleAuthSubmit()">Konto erstellen</button>
-                <button class="auth-toggle-btn" id="authToggleBtn" onclick="toggleAuthMode()">Bereits ein Konto? Hier anmelden</button>
+                <button class="btn-primary bouncy" id="authSubmitBtn" onclick="handleAuthSubmit()">Create Account</button>
+                <button class="auth-toggle-btn" id="authToggleBtn" onclick="toggleAuthMode()">Already have an account? Sign In</button>
             </div>
         </div>
 
@@ -646,7 +656,14 @@
         <div id="mainScreen" style="display: none;">
             <header>
                 <h1>My Habits</h1>
-                <button class="logout-btn" onclick="handleLogout()"><i class="fa-solid fa-right-from-bracket"></i></button>
+                <div class="header-actions">
+                    <button class="logout-btn" onclick="openAccountModal()" title="Account Settings">
+                        <i class="fa-solid fa-user"></i>
+                    </button>
+                    <button class="logout-btn" onclick="handleLogout()" title="Logout">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
+                </div>
             </header>
 
             <div id="habitListContainer" class="habit-list"></div>
@@ -654,29 +671,29 @@
             <div class="fab-container">
                 <button class="fab-btn bouncy" onclick="openAddModal()">
                     <i class="fa-solid fa-plus"></i>
-                    <span>Neues Habit</span>
+                    <span>New Habit</span>
                 </button>
             </div>
         </div>
 
     </div>
 
-    <!-- MODAL: ERSTELLEN / BEARBEITEN -->
+    <!-- MODAL: CREATE / EDIT HABIT -->
     <div id="formModal" class="modal-overlay">
         <div class="modal-card">
             <div class="modal-header">
-                <button onclick="closeModal('formModal')">Abbrechen</button>
-                <h2 id="formModalTitle">Neues Habit</h2>
-                <button onclick="saveHabitForm()">Speichern</button>
+                <button onclick="closeModal('formModal')">Cancel</button>
+                <h2 id="formModalTitle">New Habit</h2>
+                <button onclick="saveHabitForm()">Save</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
                     <span class="form-label">NAME</span>
-                    <input type="text" id="habitNameInput" class="form-input" placeholder="z. B. 2L Wasser trinken">
+                    <input type="text" id="habitNameInput" class="form-input" placeholder="e.g. Drink 2L water">
                 </div>
 
                 <div class="form-group">
-                    <span class="form-label">FARBE</span>
+                    <span class="form-label">COLOR</span>
                     <div class="color-grid" id="colorGrid"></div>
                 </div>
 
@@ -688,20 +705,62 @@
         </div>
     </div>
 
-    <!-- MODAL: DETAILS & KALENDER -->
+    <!-- MODAL: DETAILS & CALENDAR -->
     <div id="detailModal" class="modal-overlay">
         <div class="modal-card">
             <div class="modal-header">
-                <button onclick="closeModal('detailModal')">Schließen</button>
+                <button onclick="closeModal('detailModal')">Close</button>
                 <h2>Details</h2>
-                <button onclick="openEditModal(selectedHabitForDetail)">Bearbeiten</button>
+                <button onclick="openEditModal(selectedHabitForDetail)">Edit</button>
             </div>
             <div class="modal-body" id="detailModalContent"></div>
         </div>
     </div>
 
+    <!-- MODAL: ACCOUNT SETTINGS -->
+    <div id="accountModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <button onclick="closeModal('accountModal')">Cancel</button>
+                <h2>Account Settings</h2>
+                <div></div>
+            </div>
+            <div class="modal-body">
+                
+                <!-- E-Mail ändern -->
+                <div class="form-group">
+                    <span class="form-label">NEW EMAIL</span>
+                    <input type="email" id="updateEmailInput" class="form-input" placeholder="new@email.com">
+                    <button class="btn-primary bouncy" onclick="handleUpdateEmail()">Update Email</button>
+                </div>
+
+                <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 4px 0;">
+
+                <!-- Passwort ändern -->
+                <div class="form-group">
+                    <span class="form-label">NEW PASSWORD</span>
+                    <input type="password" id="updatePasswordInput" class="form-input" placeholder="Min. 6 characters">
+                    <button class="btn-primary bouncy" onclick="handleUpdatePassword()">Update Password</button>
+                </div>
+
+                <div id="accountMsg" class="auth-message"></div>
+
+                <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 4px 0;">
+
+                <!-- Account / Daten löschen -->
+                <div class="form-group">
+                    <span class="form-label" style="color: #EF4444;">DANGER ZONE</span>
+                    <button class="delete-btn-full bouncy" onclick="handleDeleteAccount()">
+                        <i class="fa-solid fa-user-xmark"></i> Delete Account Data
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
     <script>
-        // SUPABASE KONFIGURATION
+        // SUPABASE CONFIGURATION
         const SUPABASE_URL = "https://ntkmtlpzjpldpnocuyol.supabase.co";
         const SUPABASE_ANON_KEY = "sb_publishable_EL6J2YmuJGZMhrmeSfOyWQ_wlUvTc2N";
         
@@ -756,7 +815,7 @@
         ];
 
         const availableIcons = Object.keys(iconMapping);
-        const shortWeekdays = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
+        const shortWeekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
         let habits = [];
         let completions = {};
@@ -783,13 +842,13 @@
             isRegisterMode = !isRegisterMode;
             hideAuthMessage();
             if (isRegisterMode) {
-                document.getElementById("authTitle").innerText = "Registrieren";
-                document.getElementById("authSubmitBtn").innerText = "Konto erstellen";
-                document.getElementById("authToggleBtn").innerText = "Bereits ein Konto? Hier anmelden";
+                document.getElementById("authTitle").innerText = "Sign Up";
+                document.getElementById("authSubmitBtn").innerText = "Create Account";
+                document.getElementById("authToggleBtn").innerText = "Already have an account? Sign In";
             } else {
-                document.getElementById("authTitle").innerText = "Anmelden";
-                document.getElementById("authSubmitBtn").innerText = "Einloggen";
-                document.getElementById("authToggleBtn").innerText = "Noch kein Konto? Hier registrieren";
+                document.getElementById("authTitle").innerText = "Sign In";
+                document.getElementById("authSubmitBtn").innerText = "Sign In";
+                document.getElementById("authToggleBtn").innerText = "Don't have an account? Sign Up";
             }
         }
 
@@ -810,12 +869,12 @@
             const password = document.getElementById("loginPassword").value.trim();
 
             if (!email || !password) {
-                showAuthMessage("Bitte E-Mail und Passwort eingeben.", true);
+                showAuthMessage("Please enter email and password.", true);
                 return;
             }
 
             if (password.length < 6) {
-                showAuthMessage("Das Passwort muss mindestens 6 Zeichen lang sein.", true);
+                showAuthMessage("Password must be at least 6 characters long.", true);
                 return;
             }
 
@@ -823,18 +882,18 @@
                 const { data, error } = await supabaseClient.auth.signUp({ email, password });
 
                 if (error) {
-                    showAuthMessage("Registrierung fehlgeschlagen: " + error.message, true);
+                    showAuthMessage("Registration failed: " + error.message, true);
                 } else if (data.user && data.session === null) {
-                    showAuthMessage("Registrierung erfolgreich! Bitte deaktiviere im Supabase Dashboard 'Confirm email', um dich sofort einzuloggen.", false);
+                    showAuthMessage("Registration successful! Please check your email or disable 'Confirm email' in Supabase Dashboard.", false);
                 } else {
-                    showAuthMessage("Konto erfolgreich erstellt! Lade App...", false);
+                    showAuthMessage("Account created successfully! Loading app...", false);
                     setTimeout(() => showApp(), 1000);
                 }
             } else {
                 const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
 
                 if (error) {
-                    showAuthMessage("Login fehlgeschlagen: " + error.message, true);
+                    showAuthMessage("Login failed: " + error.message, true);
                 } else {
                     showApp();
                 }
@@ -865,7 +924,7 @@
                 .order('created_at', { ascending: true });
 
             if (habitsErr) {
-                console.error("Habits Fetch Fehler:", habitsErr);
+                console.error("Habits Fetch Error:", habitsErr);
             } else if (habitsData) {
                 habits = habitsData.map(h => ({
                     id: h.id,
@@ -882,7 +941,7 @@
                 .select('*');
 
             if (compErr) {
-                console.error("Completions Fetch Fehler:", compErr);
+                console.error("Completions Fetch Error:", compErr);
             } else if (compData) {
                 completions = {};
                 compData.forEach(c => {
@@ -995,7 +1054,7 @@
                 container.innerHTML = `
                     <div class="empty-state">
                         <i class="fa-solid fa-wand-magic-sparkles"></i>
-                        <p>Keine Habits vorhanden.<br>Erstelle jetzt deinen ersten!</p>
+                        <p>No habits yet.<br>Create your first one now!</p>
                     </div>
                 `;
                 return;
@@ -1008,11 +1067,101 @@
                 card.className = "habit-card";
                 card.draggable = true;
                 card.dataset.index = index;
+                card.dataset.id = habit.id;
 
                 card.onclick = (e) => {
                     if (e.target.closest('button')) return;
                     openDetailModal(habit);
                 };
+
+                // --- DRAG & DROP DESKTOP ---
+                card.addEventListener("dragstart", (e) => {
+                    e.dataTransfer.setData("text/plain", index);
+                    setTimeout(() => card.classList.add("dragging"), 0);
+                });
+
+                card.addEventListener("dragend", () => {
+                    card.classList.remove("dragging");
+                    saveNewHabitOrder();
+                });
+
+                card.addEventListener("dragover", (e) => {
+                    e.preventDefault();
+                    const draggingCard = container.querySelector(".dragging");
+                    if (!draggingCard || draggingCard === card) return;
+
+                    const rect = card.getBoundingClientRect();
+                    const next = (e.clientY - rect.top) / (rect.bottom - rect.top) > 0.5;
+                    container.insertBefore(draggingCard, next ? card.nextSibling : card);
+                });
+
+                // --- TOUCH / MOBILE DRAG & DROP ---
+                let touchStartY = 0;
+                let initialCardTop = 0;
+                let clone = null;
+
+                card.addEventListener("touchstart", (e) => {
+                    if (e.target.closest('button')) return; // Klicks auf Buttons nicht blockieren
+                    touchStartY = e.touches[0].clientY;
+                    
+                    const timer = setTimeout(() => {
+                        card.classList.add("dragging");
+                        
+                        // Klon für visuelles Feedback beim Ziehen erstellen
+                        clone = card.cloneNode(true);
+                        clone.style.position = "fixed";
+                        clone.style.width = card.offsetWidth + "px";
+                        clone.style.left = card.getBoundingClientRect().left + "px";
+                        clone.style.top = card.getBoundingClientRect().top + "px";
+                        clone.style.zIndex = "9999";
+                        clone.style.opacity = "0.9";
+                        clone.style.pointerEvents = "none";
+                        document.body.appendChild(clone);
+                    }, 200); // 200ms Halte-Dauer zum Aktivieren
+
+                    card.dataset.touchTimer = timer;
+                }, { passive: true });
+
+                card.addEventListener("touchmove", (e) => {
+                    if (!card.classList.contains("dragging")) {
+                        clearTimeout(card.dataset.touchTimer);
+                        return;
+                    }
+                    e.preventDefault();
+
+                    const currentY = e.touches[0].clientY;
+                    const diffY = currentY - touchStartY;
+                    if (clone) {
+                        clone.style.transform = `translateY(${diffY}px)`;
+                    }
+
+                    // Zielelement unter dem Finger finden
+                    const elemBelow = document.elementFromPoint(window.innerWidth / 2, currentY);
+                    const targetCard = elemBelow ? elemBelow.closest(".habit-card") : null;
+
+                    if (targetCard && targetCard !== card) {
+                        const rect = targetCard.getBoundingClientRect();
+                        const isAfter = currentY > rect.top + rect.height / 2;
+                        if (isAfter) {
+                            container.insertBefore(card, targetCard.nextSibling);
+                        } else {
+                            container.insertBefore(card, targetCard);
+                        }
+                    }
+                }, { passive: false });
+
+                card.addEventListener("touchend", () => {
+                    clearTimeout(card.dataset.touchTimer);
+                    if (card.classList.contains("dragging")) {
+                        card.classList.remove("dragging");
+                        if (clone) {
+                            clone.remove();
+                            clone = null;
+                        }
+                        updateLocalHabitsOrderFromDOM();
+                        saveNewHabitOrder();
+                    }
+                });
 
                 const faIcon = iconMapping[habit.icon] || "fa-star";
                 const streak = currentStreak(habit.id);
@@ -1067,6 +1216,33 @@
             });
         }
 
+        function updateLocalHabitsOrderFromDOM() {
+            const container = document.getElementById("habitListContainer");
+            const cardElements = container.querySelectorAll(".habit-card");
+            const newHabitsOrder = [];
+
+            cardElements.forEach((card, newIndex) => {
+                const habitId = card.dataset.id;
+                const habitObj = habits.find(h => h.id === habitId);
+                if (habitObj) {
+                    habitObj.position = newIndex;
+                    newHabitsOrder.push(habitObj);
+                }
+            });
+            habits = newHabitsOrder;
+        }
+
+        async function saveNewHabitOrder() {
+            updateLocalHabitsOrderFromDOM();
+
+            for (let habit of habits) {
+                await supabaseClient
+                    .from('habits')
+                    .update({ position: habit.position })
+                    .eq('id', habit.id);
+            }
+        }
+
         function setupFormSelectors() {
             const colorGrid = document.getElementById("colorGrid");
             colorGrid.innerHTML = "";
@@ -1108,7 +1284,7 @@
 
         function openAddModal() {
             selectedHabitForEdit = null;
-            document.getElementById("formModalTitle").innerText = "Neues Habit";
+            document.getElementById("formModalTitle").innerText = "New Habit";
             document.getElementById("habitNameInput").value = "";
             formColor = vibrantPastels[0];
             formIcon = availableIcons[0];
@@ -1119,7 +1295,7 @@
         function openEditModal(habit) {
             closeModal("detailModal");
             selectedHabitForEdit = habit;
-            document.getElementById("formModalTitle").innerText = "Habit bearbeiten";
+            document.getElementById("formModalTitle").innerText = "Edit Habit";
             document.getElementById("habitNameInput").value = habit.name;
             formColor = habit.colorHex || vibrantPastels[0];
             formIcon = habit.icon || availableIcons[0];
@@ -1130,7 +1306,7 @@
         async function saveHabitForm() {
             const name = document.getElementById("habitNameInput").value.trim();
             if (!name) {
-                alert("Bitte gib einen Namen für das Habit ein.");
+                alert("Please enter a name for the habit.");
                 return;
             }
 
@@ -1152,7 +1328,7 @@
                     .eq('id', selectedHabitForEdit.id);
 
                 if (error) {
-                    alert("Fehler beim Aktualisieren: " + error.message);
+                    alert("Update failed: " + error.message);
                     return;
                 }
             } else {
@@ -1168,7 +1344,7 @@
                     .select();
 
                 if (error) {
-                    alert("Fehler beim Speichern: " + error.message);
+                    alert("Saving failed: " + error.message);
                     return;
                 }
 
@@ -1224,19 +1400,19 @@
                     <div class="stat-box">
                         <i class="fa-solid fa-calendar-check" style="color: ${habit.colorHex}"></i>
                         <span class="stat-val">${mCount}</span>
-                        <span class="stat-lbl">MONAT</span>
+                        <span class="stat-lbl">MONTH</span>
                     </div>
                     <div class="stat-box">
                         <i class="fa-solid fa-circle-check" style="color: ${habit.colorHex}"></i>
                         <span class="stat-val">${totalCount}</span>
-                        <span class="stat-lbl">GESAMT</span>
+                        <span class="stat-lbl">TOTAL</span>
                     </div>
                 </div>
 
                 ${renderCalendarHTML(habit)}
 
                 <button class="delete-btn-full bouncy" onclick="deleteHabit('${habit.id}')">
-                    <i class="fa-solid fa-trash"></i> Habit löschen
+                    <i class="fa-solid fa-trash"></i> Delete Habit
                 </button>
             `;
 
@@ -1251,7 +1427,7 @@
         function renderCalendarHTML(habit) {
             const year = selectedDetailMonthDate.getFullYear();
             const month = selectedDetailMonthDate.getMonth();
-            const monthName = selectedDetailMonthDate.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
+            const monthName = selectedDetailMonthDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
             const firstDay = new Date(year, month, 1);
             const lastDay = new Date(year, month + 1, 0);
@@ -1300,13 +1476,13 @@
                         </div>
                     </div>
                     <div class="calendar-grid">
-                        <span class="weekday-hdr">Mo</span>
-                        <span class="weekday-hdr">Di</span>
-                        <span class="weekday-hdr">Mi</span>
-                        <span class="weekday-hdr">Do</span>
-                        <span class="weekday-hdr">Fr</span>
-                        <span class="weekday-hdr">Sa</span>
-                        <span class="weekday-hdr">So</span>
+                        <span class="weekday-hdr">Mon</span>
+                        <span class="weekday-hdr">Tue</span>
+                        <span class="weekday-hdr">Wed</span>
+                        <span class="weekday-hdr">Thu</span>
+                        <span class="weekday-hdr">Fri</span>
+                        <span class="weekday-hdr">Sat</span>
+                        <span class="weekday-hdr">Sun</span>
                         ${daysHTML}
                     </div>
                 </div>
@@ -1314,7 +1490,7 @@
         }
 
         async function deleteHabit(habitId) {
-            if (confirm("Möchtest du dieses Habit wirklich löschen?")) {
+            if (confirm("Are you sure you want to delete this habit?")) {
                 habits = habits.filter(h => h.id !== habitId);
                 delete completions[habitId];
 
@@ -1323,6 +1499,89 @@
 
                 renderHabitList();
                 closeModal("detailModal");
+            }
+        }
+
+        /* ACCOUNT SETTINGS LOGIC */
+        async function openAccountModal() {
+            const { data: { user } } = await supabaseClient.auth.getUser();
+            if (user) {
+                document.getElementById("updateEmailInput").value = user.email || "";
+            }
+            document.getElementById("accountMsg").style.display = "none";
+            openModal("accountModal");
+        }
+
+        async function handleUpdateEmail() {
+            const newEmail = document.getElementById("updateEmailInput").value.trim();
+            const msgBox = document.getElementById("accountMsg");
+
+            if (!newEmail) return;
+
+            const { error } = await supabaseClient.auth.updateUser({ email: newEmail });
+
+            msgBox.style.display = "block";
+            if (error) {
+                msgBox.className = "auth-message error";
+                msgBox.innerText = "Error: " + error.message;
+            } else {
+                msgBox.className = "auth-message success";
+                msgBox.innerText = "Confirmation link sent to your new email address!";
+            }
+        }
+
+        async function handleUpdatePassword() {
+            const newPassword = document.getElementById("updatePasswordInput").value.trim();
+            const msgBox = document.getElementById("accountMsg");
+
+            if (!newPassword || newPassword.length < 6) {
+                msgBox.style.display = "block";
+                msgBox.className = "auth-message error";
+                msgBox.innerText = "Password must be at least 6 characters long.";
+                return;
+            }
+
+            const { error } = await supabaseClient.auth.updateUser({ password: newPassword });
+
+            msgBox.style.display = "block";
+            if (error) {
+                msgBox.className = "auth-message error";
+                msgBox.innerText = "Error: " + error.message;
+            } else {
+                msgBox.className = "auth-message success";
+                msgBox.innerText = "Password updated successfully!";
+                document.getElementById("updatePasswordInput").value = "";
+            }
+        }
+
+        async function handleDeleteAccount() {
+            const confirmation = confirm("Are you sure you want to delete your account data? All your habits and progress will be permanently lost.");
+            
+            if (!confirmation) return;
+
+            try {
+                const habitIds = habits.map(h => h.id);
+                if (habitIds.length > 0) {
+                    await supabaseClient
+                        .from('completions')
+                        .delete()
+                        .in('habit_id', habitIds);
+
+                    await supabaseClient
+                        .from('habits')
+                        .delete()
+                        .in('id', habitIds);
+                }
+
+                habits = [];
+                completions = {};
+
+                closeModal("accountModal");
+                await handleLogout();
+
+                alert("Your account data has been successfully deleted.");
+            } catch (err) {
+                alert("An error occurred while deleting your data: " + err.message);
             }
         }
 
