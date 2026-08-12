@@ -258,7 +258,7 @@
             gap: 3px;
             font-size: 12px;
             font-weight: 700;
-            margin-left: 4px;
+            margin-left: 8px; /* Ganz leicht nach rechts verschoben */
         }
 
         .streak-badge i {
@@ -680,58 +680,42 @@
         
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // Exaktes Mapping passend zu deinem Bild (8 Reihen x 5 Symbole = 40 Icons)
         const iconMapping = {
-            // Reihe 1
             "drop.fill": "fa-droplet",
             "book.fill": "fa-book-open",
             "figure.run": "fa-person-running",
             "moon.fill": "fa-moon",
             "sun.max.fill": "fa-sun",
-
-            // Reihe 2
             "leaf.fill": "fa-leaf",
             "cup.and.saucer.fill": "fa-mug-hot",
             "dumbbell.fill": "fa-dumbbell",
             "heart.fill": "fa-heart",
             "brain.head.profile": "fa-brain",
-
-            // Reihe 3
             "flame.fill": "fa-fire",
             "pencil.and.outline": "fa-pen",
             "bed.double.fill": "fa-bed",
             "fork.knife": "fa-utensils",
             "pills.fill": "fa-pills",
-
-            // Reihe 4
             "laptopcomputer": "fa-laptop",
             "paintbrush.fill": "fa-paint-brush",
             "target": "fa-bullseye",
             "bicycle": "fa-bicycle",
             "cross.case.fill": "fa-kit-medical",
-
-            // Reihe 5
             "checkmark.seal.fill": "fa-certificate",
             "graduationcap.fill": "fa-graduation-cap",
             "music.note": "fa-music",
             "camera.fill": "fa-camera",
             "cart.fill": "fa-shopping-cart",
-
-            // Reihe 6
             "wallet.pass.fill": "fa-receipt",
             "globe.europe.africa.fill": "fa-globe",
             "tree.fill": "fa-tree",
             "hourglass": "fa-hourglass",
             "bubbles.and.sparkles.fill": "fa-wand-magic-sparkles",
-
-            // Reihe 7
             "figure.walk": "fa-person-walking",
             "figure.mind.and.body": "fa-spa",
             "sparkles": "fa-wand-magic-sparkles",
             "alarm.fill": "fa-bell",
             "calendar": "fa-calendar-days",
-
-            // Reihe 8
             "list.bullet.clipboard.fill": "fa-clipboard-list",
             "lightbulb.fill": "fa-lightbulb",
             "face.smiling.fill": "fa-face-smile",
@@ -921,6 +905,25 @@
             return streak;
         }
 
+        function monthlyCount(habitId) {
+            const set = completions[habitId];
+            if (!set || set.size === 0) return 0;
+
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+            let count = 0;
+
+            set.forEach(dateStr => {
+                const parts = dateStr.split('-');
+                if (parseInt(parts[0]) === year && (parseInt(parts[1]) - 1) === month) {
+                    count++;
+                }
+            });
+
+            return count;
+        }
+
         function isCompleted(habitId, date) {
             const set = completions[habitId];
             return set ? set.has(formatDateKey(date)) : false;
@@ -1029,56 +1032,12 @@
                     <button class="check-btn bouncy ${isDoneToday ? 'completed' : ''}" 
                             style="${isDoneToday ? `background-color: ${habit.colorHex}` : ''}"
                             onclick="toggleCompletion('${habit.id}', new Date())">
-                        <i class="fa-solid fa-check" style="color: ${isDoneToday ? '#0F172A' : '#475569'}"></i>
+                        <i class="fa-solid fa-check"></i>
                     </button>
                 `;
 
-                setupDragEvents(card);
                 container.appendChild(card);
             });
-        }
-
-        let draggedIndex = null;
-
-        function setupDragEvents(card) {
-            card.addEventListener('dragstart', (e) => {
-                draggedIndex = parseInt(card.dataset.index);
-                card.classList.add('dragging');
-                e.dataTransfer.effectAllowed = 'move';
-            });
-
-            card.addEventListener('dragend', () => {
-                card.classList.remove('dragging');
-                draggedIndex = null;
-            });
-
-            card.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                e.dataTransfer.dropEffect = 'move';
-            });
-
-            card.addEventListener('drop', async (e) => {
-                e.preventDefault();
-                const targetIndex = parseInt(card.dataset.index);
-                if (draggedIndex === null || draggedIndex === targetIndex) return;
-
-                const movedItem = habits.splice(draggedIndex, 1)[0];
-                habits.splice(targetIndex, 0, movedItem);
-
-                renderHabitList();
-                await savePositions();
-            });
-        }
-
-        async function savePositions() {
-            const updates = habits.map((h, index) => {
-                h.position = index;
-                return supabaseClient
-                    .from('habits')
-                    .update({ position: index })
-                    .eq('id', h.id);
-            });
-            await Promise.all(updates);
         }
 
         function setupFormSelectors() {
@@ -1216,6 +1175,7 @@
             const content = document.getElementById("detailModalContent");
             const faIcon = iconMapping[habit.icon] || "fa-star";
             const streak = currentStreak(habit.id);
+            const mCount = monthlyCount(habit.id);
             const totalCount = completions[habit.id] ? completions[habit.id].size : 0;
 
             let html = `
@@ -1235,10 +1195,15 @@
                         <span class="stat-lbl">STREAK</span>
                     </div>
                     <div class="stat-box">
-                        <i class="fa-solid fa-check-double" style="color: ${habit.colorHex}"></i>
+                        <i class="fa-solid fa-calendar-check" style="color: ${habit.colorHex}"></i>
+                        <span class="stat-val">${mCount}</span>
+                        <span class="stat-lbl">MONAT</span>
+                    </div>
+                    <div class="stat-box">
+                        <i class="fa-solid fa-circle-check" style="color: ${habit.colorHex}"></i>
                         <span class="stat-val">${totalCount}</span>
                         <span class="stat-lbl">GESAMT</span>
-                    </div>
+            </div>
                 </div>
 
                 ${renderCalendarHTML(habit)}
