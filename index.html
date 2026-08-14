@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>My Habits</title>
+    <link rel="icon" type="image/png" href="/assets/icon.png">
+    <link rel="apple-touch-icon" href="/assets/icon.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -52,7 +54,7 @@
             display: flex;
             flex-direction: column;
             position: relative;
-            padding: 20px 16px 120px 16px; /* Unten mehr Platz für den letzten Habit & Delete Button */
+            padding: 20px 16px 140px 16px;
             overflow-x: hidden;
         }
 
@@ -139,20 +141,23 @@
             font-size: 32px;
             font-weight: 700;
             letter-spacing: -0.5px;
+            line-height: 1.2;
+            margin: 0;
         }
 
-        .header-actions {
+        .icon-btn-round {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-sub);
+            font-size: 16px;
+            cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 18px;
-        }
-
-        .logout-btn {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            font-size: 18px;
-            cursor: pointer;
+            justify-content: center;
+            flex-shrink: 0;
         }
 
         .empty-state {
@@ -316,7 +321,8 @@
 
         .fab-container {
             position: fixed;
-            bottom: 20px;
+            bottom: 48px;
+            bottom: calc(48px + env(safe-area-inset-bottom, 0px));
             left: 50%;
             transform: translateX(-50%);
             z-index: 10;
@@ -326,18 +332,18 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            padding: 14px 22px;
-            background: linear-gradient(to right, var(--accent-primary), var(--accent-secondary));
+            padding: 14px 28px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
             border-radius: 999px;
             border: none;
             color: white;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            box-shadow: 0 6px 12px rgba(99, 102, 241, 0.4);
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.45);
         }
 
-        /* MODALS (Identische Höhe wie Habit ändern: max-height: 90vh) */
+        /* MODALS */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -364,8 +370,7 @@
         .modal-card {
             width: 100%;
             max-width: 480px;
-            max-height: 90vh; /* Exakt gleiche Höhe */
-            height: auto;
+            max-height: 90vh;
             background: var(--bg-main);
             border-top-left-radius: 24px;
             border-top-right-radius: 24px;
@@ -393,18 +398,6 @@
         .modal-header h2 {
             font-size: 17px;
             font-weight: 600;
-            flex: 1;
-            text-align: center; /* Titel immer in der Mitte */
-        }
-
-        /* Flexbox-Trick, damit der mittlere Titel zentriert bleibt, auch wenn links/rechts Buttons sind */
-        .modal-header > *:first-child {
-            flex: 0 0 70px;
-            text-align: left;
-        }
-        .modal-header > *:last-child {
-            flex: 0 0 70px;
-            text-align: right;
         }
 
         .modal-header button {
@@ -417,7 +410,7 @@
         }
 
         .modal-body {
-            padding: 20px 20px 40px 20px; /* Unten großzügig gepolstert fürs Scrollen */
+            padding: 20px;
             overflow-y: auto;
             overflow-x: hidden;
             display: flex;
@@ -637,6 +630,256 @@
             background: rgba(239, 68, 68, 0.15);
             color: #EF4444;
         }
+
+        /* POMODORO TIMER STYLES */
+        .pomo-tabs {
+            display: inline-flex;
+            background: var(--bg-card);
+            padding: 4px;
+            border-radius: 999px;
+            border: 1px solid var(--border-color);
+            gap: 4px;
+            max-width: 100%;
+        }
+
+        .pomo-tab-btn {
+            background: none;
+            border: none;
+            color: var(--text-sub);
+            padding: 8px 16px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .pomo-tab-btn.active {
+            background: linear-gradient(to right, var(--accent-primary), var(--accent-secondary));
+            color: #ffffff;
+            box-shadow: 0 4px 10px rgba(99, 102, 241, 0.35);
+        }
+
+        .pomo-circle-wrap {
+            position: relative;
+            width: 210px;
+            height: 210px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .pomo-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .pomo-circle-bg {
+            fill: none;
+            stroke: var(--bg-card);
+            stroke-width: 9;
+        }
+
+        .pomo-circle-progress {
+            fill: none;
+            stroke: var(--accent-primary);
+            stroke-width: 9;
+            stroke-linecap: round;
+            stroke-dasharray: 590.62;
+            stroke-dashoffset: 0;
+            transition: stroke-dashoffset 0.4s linear, stroke 0.3s ease;
+        }
+
+        .pomo-time-container {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+        }
+
+        .pomo-mode-badge {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--accent-primary);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        #pomodoroModal .modal-card {
+            min-height: 520px;
+            height: 530px;
+            max-height: 88vh;
+        }
+
+        #pomodoroModal .modal-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px 24px 20px;
+            gap: 0;
+            overflow: visible;
+        }
+
+        .pomo-time-display {
+            font-size: 48px;
+            font-weight: 800;
+            letter-spacing: -1.5px;
+            color: #ffffff;
+            font-variant-numeric: tabular-nums;
+            line-height: 1;
+            margin: 4px 0;
+        }
+
+        .pomo-round-indicator {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-sub);
+            height: 18px;
+            line-height: 18px;
+        }
+
+        .pomo-stepper-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 160px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            padding: 4px 6px;
+            border-radius: 999px;
+            box-sizing: border-box;
+        }
+
+        .pomo-step-btn {
+            width: 32px;
+            height: 32px;
+            min-width: 32px;
+            border-radius: 50%;
+            background: var(--bg-main);
+            border: 1px solid var(--border-color);
+            color: #ffffff;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+
+        .pomo-step-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .pomo-duration-text {
+            font-size: 13.5px;
+            font-weight: 700;
+            color: #ffffff;
+            text-align: center;
+            flex-grow: 1;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .pomo-presets-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .pomo-preset-chip {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-sub);
+            height: 30px;
+            width: 52px;
+            min-width: 52px;
+            max-width: 52px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-align: center;
+            box-sizing: border-box;
+            padding: 0;
+        }
+
+        .pomo-preset-chip.active {
+            background: rgba(99, 102, 241, 0.2);
+            border-color: var(--accent-primary);
+            color: #ffffff;
+        }
+
+        .pomo-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            width: 100%;
+            margin-top: 4px;
+        }
+
+        .pomo-ctrl-btn {
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .pomo-ctrl-btn.primary {
+            padding: 14px 38px;
+            background: linear-gradient(to right, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            border-radius: 999px;
+            font-size: 16px;
+            font-weight: 700;
+            gap: 10px;
+            box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+            min-width: 140px;
+        }
+
+        .pomo-ctrl-btn.secondary {
+            width: 48px;
+            height: 48px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-sub);
+            border-radius: 50%;
+            font-size: 16px;
+        }
+
+        .pomo-ctrl-btn.secondary:hover {
+            color: #ffffff;
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .pomo-active-indicator {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: #22C55E;
+            box-shadow: 0 0 6px #22C55E;
+        }
     </style>
 </head>
 <body>
@@ -669,12 +912,13 @@
         <div id="mainScreen" style="display: none;">
             <header>
                 <h1>My Habits</h1>
-                <div class="header-actions">
-                    <button class="logout-btn" onclick="openAccountModal()" title="Account">
-                        <i class="fa-solid fa-user"></i>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button class="icon-btn-round bouncy" id="pomodoroHeaderBtn" onclick="openPomodoroModal()" title="Focus Timer" style="position: relative;">
+                        <i class="fa-solid fa-stopwatch"></i>
+                        <span id="pomoActiveDot" class="pomo-active-indicator" style="display: none;"></span>
                     </button>
-                    <button class="logout-btn" onclick="handleLogout()" title="Logout">
-                        <i class="fa-solid fa-right-from-bracket"></i>
+                    <button class="icon-btn-round bouncy" onclick="openAccountModal()" title="Account Settings">
+                        <i class="fa-solid fa-user"></i>
                     </button>
                 </div>
             </header>
@@ -730,12 +974,12 @@
         </div>
     </div>
 
-    <!-- MODAL: ACCOUNT -->
+    <!-- MODAL: ACCOUNT SETTINGS -->
     <div id="accountModal" class="modal-overlay">
         <div class="modal-card">
             <div class="modal-header">
                 <button onclick="closeModal('accountModal')">Cancel</button>
-                <h2>Account</h2>
+                <h2>Account Settings</h2>
                 <div></div>
             </div>
             <div class="modal-body">
@@ -760,11 +1004,80 @@
 
                 <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 4px 0;">
 
+                <!-- Abmelden / Logout -->
+                <div class="form-group">
+                    <span class="form-label">SESSION</span>
+                    <button class="btn-primary bouncy" onclick="closeModal('accountModal'); handleLogout();" style="background: var(--bg-card); border: 1px solid var(--border-color); color: #ffffff; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 0;">
+                        <i class="fa-solid fa-right-from-bracket"></i> Logout
+                    </button>
+                </div>
+
+                <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 4px 0;">
+
                 <!-- Account / Daten löschen -->
                 <div class="form-group">
                     <span class="form-label" style="color: #EF4444;">DANGER ZONE</span>
                     <button class="delete-btn-full bouncy" onclick="handleDeleteAccount()">
                         <i class="fa-solid fa-user-xmark"></i> Delete Account Data
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: POMODORO FOCUS TIMER -->
+    <div id="pomodoroModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <button onclick="closeModal('pomodoroModal')">Close</button>
+                <h2>Focus Timer</h2>
+                <div style="width: 48px;"></div>
+            </div>
+            <div class="modal-body" style="align-items: center; text-align: center; gap: 14px; padding: 10px 18px 24px 18px;">
+                
+                <!-- Mode Switcher Tabs -->
+                <div class="pomo-tabs">
+                    <button class="pomo-tab-btn active" id="pomoTabFocus" onclick="switchPomodoroMode('focus')">Focus</button>
+                    <button class="pomo-tab-btn" id="pomoTabShort" onclick="switchPomodoroMode('shortBreak')">Short Break</button>
+                    <button class="pomo-tab-btn" id="pomoTabLong" onclick="switchPomodoroMode('longBreak')">Long Break</button>
+                </div>
+
+                <!-- Timer Circular Display -->
+                <div class="pomo-circle-wrap">
+                    <svg class="pomo-svg" viewBox="0 0 240 240">
+                        <circle class="pomo-circle-bg" cx="120" cy="120" r="94" />
+                        <circle class="pomo-circle-progress" id="pomoProgressCircle" cx="120" cy="120" r="94" />
+                    </svg>
+                    <div class="pomo-time-container">
+                        <div class="pomo-mode-badge" id="pomoModeBadge">Focus</div>
+                        <div class="pomo-time-display" id="pomoTimeDisplay">25:00</div>
+                        <div class="pomo-round-indicator" id="pomoRoundIndicator">Round 1 of 4</div>
+                    </div>
+                </div>
+
+                <!-- Direct Inline Time Adjuster -->
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%;">
+                    <div class="pomo-stepper-wrap">
+                        <button class="pomo-step-btn bouncy" onclick="adjustPomoMinutes(-5)" title="Subtract 5 minutes">
+                            <i class="fa-solid fa-minus"></i>
+                        </button>
+                        <span class="pomo-duration-text" id="pomoDurationText">25 min</span>
+                        <button class="pomo-step-btn bouncy" onclick="adjustPomoMinutes(5)" title="Add 5 minutes">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
+                    </div>
+                    <div class="pomo-presets-row" id="pomoPresetsRow"></div>
+                </div>
+
+                <!-- Main Action Buttons -->
+                <div class="pomo-controls">
+                    <button class="pomo-ctrl-btn secondary bouncy" onclick="resetPomodoroTimer()" title="Reset">
+                        <i class="fa-solid fa-rotate-left"></i>
+                    </button>
+                    <button class="pomo-ctrl-btn primary bouncy" id="pomoPlayPauseBtn" onclick="togglePomodoroPlay()">
+                        <i class="fa-solid fa-play" id="pomoPlayIcon"></i>
+                        <span id="pomoPlayText">Start</span>
                     </button>
                 </div>
 
@@ -1110,6 +1423,7 @@
 
                 // --- TOUCH / MOBILE DRAG & DROP ---
                 let touchStartY = 0;
+                let initialCardTop = 0;
                 let clone = null;
 
                 card.addEventListener("touchstart", (e) => {
@@ -1604,6 +1918,291 @@
                 .replace(/'/g, "&#039;");
         }
 
+        /* ================= POMODORO FOCUS TIMER LOGIC ================= */
+        const POMO_CIRCLE_CIRCUMFERENCE = 590.62; // 2 * PI * 94
+        
+        let pomoDurations = {
+            focus: 25,
+            shortBreak: 5,
+            longBreak: 15
+        };
+
+        const POMO_PRESETS = {
+            focus: [15, 25, 45, 60],
+            shortBreak: [5, 10, 15, 20],
+            longBreak: [10, 15, 20, 30]
+        };
+
+        let currentPomoMode = 'focus'; // 'focus' | 'shortBreak' | 'longBreak'
+        let pomoRound = 1;
+        let pomoTimeRemaining = 25 * 60;
+        let pomoTotalTime = 25 * 60;
+        let pomoIsRunning = false;
+        let pomoIntervalId = null;
+        let pomoTargetEndTime = null;
+        let pomoAudioCtx = null;
+
+        function getPomodoroAudioContext() {
+            if (!pomoAudioCtx) {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                if (AudioContextClass) {
+                    pomoAudioCtx = new AudioContextClass();
+                }
+            }
+            if (pomoAudioCtx && pomoAudioCtx.state === 'suspended') {
+                pomoAudioCtx.resume();
+            }
+            return pomoAudioCtx;
+        }
+
+        function playEndChime(isTest = false) {
+            try {
+                const ctx = getPomodoroAudioContext();
+                if (!ctx) return;
+
+                const now = ctx.currentTime;
+                // Harmonic 3-note chime: E5 (659Hz) -> G#5 (830Hz) -> B5 (987Hz)
+                const notes = [
+                    { freq: 659.25, time: 0.00, dur: 0.40 },
+                    { freq: 830.61, time: 0.18, dur: 0.45 },
+                    { freq: 987.77, time: 0.36, dur: 0.85 }
+                ];
+
+                notes.forEach(note => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(note.freq, now + note.time);
+
+                    gain.gain.setValueAtTime(0.0001, now + note.time);
+                    gain.gain.exponentialRampToValueAtTime(0.35, now + note.time + 0.03);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, now + note.time + note.dur);
+
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+
+                    osc.start(now + note.time);
+                    osc.stop(now + note.time + note.dur);
+                });
+            } catch (e) {
+                console.warn("Could not play timer sound:", e);
+            }
+        }
+
+        function initPomodoroState() {
+            try {
+                const savedDurations = localStorage.getItem('pomodoro_durations');
+                if (savedDurations) {
+                    const parsed = JSON.parse(savedDurations);
+                    if (parsed.focus && parsed.shortBreak && parsed.longBreak) {
+                        pomoDurations = parsed;
+                    }
+                }
+                const savedRound = localStorage.getItem('pomodoro_round');
+                if (savedRound) {
+                    pomoRound = parseInt(savedRound) || 1;
+                }
+            } catch (e) {
+                console.warn("Failed to load pomodoro config:", e);
+            }
+
+            pomoTotalTime = (pomoDurations.focus || 25) * 60;
+            pomoTimeRemaining = pomoTotalTime;
+            renderPomoPresets();
+            updatePomodoroDisplay();
+        }
+
+        function openPomodoroModal() {
+            getPomodoroAudioContext();
+            renderPomoPresets();
+            updatePomodoroDisplay();
+            openModal('pomodoroModal');
+        }
+
+        function switchPomodoroMode(mode) {
+            currentPomoMode = mode;
+            if (pomoIsRunning) {
+                pausePomodoroTimer();
+            }
+
+            document.querySelectorAll('.pomo-tab-btn').forEach(btn => btn.classList.remove('active'));
+            const tabId = mode === 'focus' ? 'pomoTabFocus' : (mode === 'shortBreak' ? 'pomoTabShort' : 'pomoTabLong');
+            const activeBtn = document.getElementById(tabId);
+            if (activeBtn) activeBtn.classList.add('active');
+
+            const progressCircle = document.getElementById('pomoProgressCircle');
+            const modeBadge = document.getElementById('pomoModeBadge');
+
+            if (mode === 'focus') {
+                pomoTotalTime = (pomoDurations.focus || 25) * 60;
+                modeBadge.innerText = 'Focus';
+                modeBadge.style.color = 'var(--accent-primary)';
+                if (progressCircle) progressCircle.style.stroke = 'var(--accent-primary)';
+            } else if (mode === 'shortBreak') {
+                pomoTotalTime = (pomoDurations.shortBreak || 5) * 60;
+                modeBadge.innerText = 'Short Break';
+                modeBadge.style.color = '#7BC896';
+                if (progressCircle) progressCircle.style.stroke = '#7BC896';
+            } else {
+                pomoTotalTime = (pomoDurations.longBreak || 15) * 60;
+                modeBadge.innerText = 'Long Break';
+                modeBadge.style.color = '#6CB8E6';
+                if (progressCircle) progressCircle.style.stroke = '#6CB8E6';
+            }
+
+            pomoTimeRemaining = pomoTotalTime;
+            renderPomoPresets();
+            updatePomodoroDisplay();
+        }
+
+        function renderPomoPresets() {
+            const container = document.getElementById('pomoPresetsRow');
+            if (!container) return;
+            const presets = POMO_PRESETS[currentPomoMode] || [15, 25, 45, 60];
+            const currentMins = pomoDurations[currentPomoMode];
+
+            container.innerHTML = presets.map(mins => `
+                <button class="pomo-preset-chip bouncy ${mins === currentMins ? 'active' : ''}" onclick="setPomoMinutes(${mins})">
+                    ${mins}m
+                </button>
+            `).join('');
+        }
+
+        function setPomoMinutes(mins) {
+            mins = Math.max(1, Math.min(120, mins));
+            pomoDurations[currentPomoMode] = mins;
+            try {
+                localStorage.setItem('pomodoro_durations', JSON.stringify(pomoDurations));
+            } catch (e) {}
+
+            pomoTotalTime = mins * 60;
+            if (!pomoIsRunning) {
+                pomoTimeRemaining = pomoTotalTime;
+            }
+            renderPomoPresets();
+            updatePomodoroDisplay();
+        }
+
+        function adjustPomoMinutes(delta) {
+            let current = pomoDurations[currentPomoMode];
+            let next = current + delta;
+            if (next < 1) next = 1;
+            if (currentPomoMode === 'focus' && next > 120) next = 120;
+            if (currentPomoMode === 'shortBreak' && next > 60) next = 60;
+            if (currentPomoMode === 'longBreak' && next > 90) next = 90;
+
+            setPomoMinutes(next);
+        }
+
+        function togglePomodoroPlay() {
+            getPomodoroAudioContext();
+            if (pomoIsRunning) {
+                pausePomodoroTimer();
+            } else {
+                startPomodoroTimer();
+            }
+        }
+
+        function startPomodoroTimer() {
+            if (pomoTimeRemaining <= 0) {
+                pomoTimeRemaining = pomoTotalTime;
+            }
+            pomoIsRunning = true;
+            pomoTargetEndTime = Date.now() + (pomoTimeRemaining * 1000);
+
+            document.getElementById('pomoPlayIcon').className = 'fa-solid fa-pause';
+            document.getElementById('pomoPlayText').innerText = 'Pause';
+            document.getElementById('pomoActiveDot').style.display = 'block';
+
+            if (pomoIntervalId) clearInterval(pomoIntervalId);
+            pomoIntervalId = setInterval(pomoTick, 250);
+        }
+
+        function pausePomodoroTimer() {
+            pomoIsRunning = false;
+            if (pomoIntervalId) {
+                clearInterval(pomoIntervalId);
+                pomoIntervalId = null;
+            }
+            document.getElementById('pomoPlayIcon').className = 'fa-solid fa-play';
+            document.getElementById('pomoPlayText').innerText = 'Start';
+            document.getElementById('pomoActiveDot').style.display = 'none';
+        }
+
+        function pomoTick() {
+            if (!pomoIsRunning || !pomoTargetEndTime) return;
+
+            const now = Date.now();
+            const diffSeconds = Math.max(0, Math.round((pomoTargetEndTime - now) / 1000));
+            pomoTimeRemaining = diffSeconds;
+            updatePomodoroDisplay();
+
+            if (diffSeconds <= 0) {
+                pausePomodoroTimer();
+                playEndChime();
+
+                // Advance to next session
+                if (currentPomoMode === 'focus') {
+                    if (pomoRound >= 4) {
+                        pomoRound = 1;
+                        switchPomodoroMode('longBreak');
+                    } else {
+                        pomoRound++;
+                        switchPomodoroMode('shortBreak');
+                    }
+                } else {
+                    switchPomodoroMode('focus');
+                }
+
+                try {
+                    localStorage.setItem('pomodoro_round', pomoRound.toString());
+                } catch (e) {}
+
+                updatePomodoroDisplay();
+            }
+        }
+
+        function resetPomodoroTimer() {
+            pausePomodoroTimer();
+            pomoTimeRemaining = pomoTotalTime;
+            updatePomodoroDisplay();
+        }
+
+        function updatePomodoroDisplay() {
+            const minutes = Math.floor(pomoTimeRemaining / 60);
+            const seconds = pomoTimeRemaining % 60;
+            const timeStr = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+            const timeDisplay = document.getElementById('pomoTimeDisplay');
+            if (timeDisplay) timeDisplay.innerText = timeStr;
+
+            const durationText = document.getElementById('pomoDurationText');
+            if (durationText) {
+                durationText.innerText = `${pomoDurations[currentPomoMode]} min`;
+            }
+
+            const roundIndicator = document.getElementById('pomoRoundIndicator');
+            if (roundIndicator) {
+                if (currentPomoMode === 'focus') {
+                    roundIndicator.innerText = `Round ${pomoRound} of 4`;
+                    roundIndicator.style.visibility = 'visible';
+                } else {
+                    // No subtitle text during breaks as requested, preserved layout space
+                    roundIndicator.innerText = '';
+                    roundIndicator.style.visibility = 'hidden';
+                }
+            }
+
+            const progressCircle = document.getElementById('pomoProgressCircle');
+            if (progressCircle && pomoTotalTime > 0) {
+                const fraction = pomoTimeRemaining / pomoTotalTime;
+                const offset = POMO_CIRCLE_CIRCUMFERENCE * (1 - fraction);
+                progressCircle.style.strokeDashoffset = offset;
+            }
+        }
+
+        initPomodoroState();
         initApp();
     </script>
 </body>
