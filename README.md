@@ -1,20 +1,50 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# My Habits – Native iOS & Android App (Expo / React Native)
 
-# Run and deploy your AI Studio app
+A native mobile Habit Tracker & Pomodoro Focus Timer built with React Native, Expo, and Supabase.
 
-This contains everything you need to run your app locally.
+---
 
-View your app in AI Studio: https://ai.studio/apps/aaf7c163-2f68-4b94-966a-871d95ddd35e
+## 🚀 Quick Start (In 2 Minutes)
 
-## Run Locally
+### 1. Install Dependencies
+```bash
+cd expo-app
+npm install
+```
 
-**Prerequisites:**  Node.js
+### 2. Start the Development Server
+```bash
+npx expo start
+```
 
+### 3. Open on your Phone
+1. Install **Expo Go** from the Apple App Store (iOS) or Google Play Store (Android).
+2. Scan the QR code displayed in your terminal with your iPhone Camera or the Expo Go app.
+3. The app loads instantly on your phone with live-reload support!
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+---
+
+## 📱 Features Included
+
+- **Native Habit Tracking**: Smooth native list, week dot matrix, and streak calculation (flame badge).
+- **Haptic Feedback**: Apple Taptic Engine feedback when checking off habits (`expo-haptics`).
+- **Pomodoro Focus Timer**: Complete with circular progress ring, audio chimes (`expo-av`), custom time stepper (+5/-5 min), and presets.
+- **Supabase Cloud Sync**: Instant persistent synchronization for habits, completions, and user accounts.
+- **Custom App Icon**: Tailored iOS app icon and splash screen located in `./assets`.
+
+---
+
+## 🛠 Creating a Standalone iOS App (.ipa / TestFlight)
+
+To build a standalone iOS app or submit to TestFlight:
+
+```bash
+# Install EAS CLI
+npm install -g eas-cli
+
+# Log in to your Expo account
+eas login
+
+# Configure & Build for iOS
+eas build --platform ios
+```
