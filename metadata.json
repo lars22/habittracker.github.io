@@ -1,7 +1,0 @@
-{
-  "name": "My Habits",
-  "description": "Habit tracker app with daily progress tracking, streaks, calendar view, and Pomodoro focus timer",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
-

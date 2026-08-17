@@ -149,8 +149,10 @@
             width: 42px;
             height: 42px;
             border-radius: 50%;
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             color: var(--text-sub);
             font-size: 16px;
             cursor: pointer;
@@ -382,15 +384,36 @@
             will-change: transform;
         }
 
+        .modal-card.dragging-sheet {
+            transition: none;
+        }
+
         .modal-overlay.active .modal-card {
             transform: translateY(0);
+        }
+
+        /* iOS-style grabber handle for swipe-to-dismiss */
+        .modal-handle-wrap {
+            display: flex;
+            justify-content: center;
+            padding: 8px 0 2px 0;
+            flex-shrink: 0;
+            touch-action: none;
+            cursor: grab;
+        }
+
+        .modal-handle {
+            width: 36px;
+            height: 5px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.22);
         }
 
         .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 16px 20px;
+            padding: 8px 20px 16px 20px;
             border-bottom: 1px solid var(--border-color);
             flex-shrink: 0;
         }
@@ -400,13 +423,53 @@
             font-weight: 600;
         }
 
-        .modal-header button {
+        .modal-header .header-text-btn {
             background: none;
             border: none;
             color: var(--accent-primary);
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
+        }
+
+        /* iOS frosted-glass "Close/Cancel" pill button (text, not icon) — matches native iOS sheet style */
+        .modal-close-btn {
+            height: 34px;
+            padding: 0 18px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.16);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+            color: #ffffff;
+            font-size: 15px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        /* Round "..." glass button that opens the iOS-style context menu */
+        .modal-more-btn {
+            width: 34px;
+            height: 34px;
+            min-width: 34px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.16);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+            color: #ffffff;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
         }
 
         .modal-body {
@@ -420,6 +483,151 @@
             overscroll-behavior-y: contain;
             scroll-behavior: smooth;
             touch-action: pan-y;
+        }
+
+        /* ===== iOS CONTEXT MENU (Edit / Delete) — anchored to the "..." button ===== */
+        .habit-menu-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 250;
+            display: none;
+        }
+
+        .habit-menu-backdrop.active {
+            display: block;
+        }
+
+        .habit-menu-popover {
+            position: fixed;
+            z-index: 260;
+            width: 200px;
+            background: rgba(30, 41, 59, 0.78);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            overflow: hidden;
+            opacity: 0;
+            transform: scale(0.92);
+            transform-origin: top right;
+            transition: opacity 0.15s ease, transform 0.15s ease;
+            pointer-events: none;
+        }
+
+        .habit-menu-popover.active {
+            opacity: 1;
+            transform: scale(1);
+            pointer-events: auto;
+        }
+
+        .habit-menu-item {
+            width: 100%;
+            background: none;
+            border: none;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 500;
+            padding: 13px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .habit-menu-item:last-child {
+            border-bottom: none;
+        }
+
+        .habit-menu-item.destructive {
+            color: #EF4444;
+        }
+
+        /* ===== iOS-style grouped settings list (Account) ===== */
+        .settings-section-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            padding: 0 4px;
+            margin-bottom: -8px;
+        }
+
+        .settings-group {
+            background: var(--bg-card);
+            border-radius: 14px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .settings-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .settings-row:last-child {
+            border-bottom: none;
+        }
+
+        .settings-row-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            color: #ffffff;
+            flex-shrink: 0;
+        }
+
+        .settings-row-body {
+            flex-grow: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .settings-row-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .settings-row .form-input {
+            padding: 0;
+            background: none;
+            border: none;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .settings-action-row {
+            background: none;
+            border: none;
+            width: 100%;
+            text-align: left;
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--accent-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .settings-action-row.destructive {
+            color: #EF4444;
         }
 
         .form-group {
@@ -631,255 +839,6 @@
             color: #EF4444;
         }
 
-        /* POMODORO TIMER STYLES */
-        .pomo-tabs {
-            display: inline-flex;
-            background: var(--bg-card);
-            padding: 4px;
-            border-radius: 999px;
-            border: 1px solid var(--border-color);
-            gap: 4px;
-            max-width: 100%;
-        }
-
-        .pomo-tab-btn {
-            background: none;
-            border: none;
-            color: var(--text-sub);
-            padding: 8px 16px;
-            border-radius: 999px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            white-space: nowrap;
-        }
-
-        .pomo-tab-btn.active {
-            background: linear-gradient(to right, var(--accent-primary), var(--accent-secondary));
-            color: #ffffff;
-            box-shadow: 0 4px 10px rgba(99, 102, 241, 0.35);
-        }
-
-        .pomo-circle-wrap {
-            position: relative;
-            width: 210px;
-            height: 210px;
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .pomo-svg {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            transform: rotate(-90deg);
-        }
-
-        .pomo-circle-bg {
-            fill: none;
-            stroke: var(--bg-card);
-            stroke-width: 9;
-        }
-
-        .pomo-circle-progress {
-            fill: none;
-            stroke: var(--accent-primary);
-            stroke-width: 9;
-            stroke-linecap: round;
-            stroke-dasharray: 590.62;
-            stroke-dashoffset: 0;
-            transition: stroke-dashoffset 0.4s linear, stroke 0.3s ease;
-        }
-
-        .pomo-time-container {
-            position: relative;
-            z-index: 2;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 2px;
-        }
-
-        .pomo-mode-badge {
-            font-size: 12px;
-            font-weight: 700;
-            color: var(--accent-primary);
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-        }
-
-        #pomodoroModal .modal-card {
-            min-height: 520px;
-            height: 530px;
-            max-height: 88vh;
-        }
-
-        #pomodoroModal .modal-body {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 20px 24px 20px;
-            gap: 0;
-            overflow: visible;
-        }
-
-        .pomo-time-display {
-            font-size: 48px;
-            font-weight: 800;
-            letter-spacing: -1.5px;
-            color: #ffffff;
-            font-variant-numeric: tabular-nums;
-            line-height: 1;
-            margin: 4px 0;
-        }
-
-        .pomo-round-indicator {
-            font-size: 12px;
-            font-weight: 500;
-            color: var(--text-sub);
-            height: 18px;
-            line-height: 18px;
-        }
-
-        .pomo-stepper-wrap {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            width: 160px;
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            padding: 4px 6px;
-            border-radius: 999px;
-            box-sizing: border-box;
-        }
-
-        .pomo-step-btn {
-            width: 32px;
-            height: 32px;
-            min-width: 32px;
-            border-radius: 50%;
-            background: var(--bg-main);
-            border: 1px solid var(--border-color);
-            color: #ffffff;
-            font-size: 13px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: background 0.15s ease;
-        }
-
-        .pomo-step-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .pomo-duration-text {
-            font-size: 13.5px;
-            font-weight: 700;
-            color: #ffffff;
-            text-align: center;
-            flex-grow: 1;
-            font-variant-numeric: tabular-nums;
-        }
-
-        .pomo-presets-row {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            width: 100%;
-        }
-
-        .pomo-preset-chip {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            color: var(--text-sub);
-            height: 30px;
-            width: 52px;
-            min-width: 52px;
-            max-width: 52px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 999px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.15s ease;
-            text-align: center;
-            box-sizing: border-box;
-            padding: 0;
-        }
-
-        .pomo-preset-chip.active {
-            background: rgba(99, 102, 241, 0.2);
-            border-color: var(--accent-primary);
-            color: #ffffff;
-        }
-
-        .pomo-controls {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 14px;
-            width: 100%;
-            margin-top: 4px;
-        }
-
-        .pomo-ctrl-btn {
-            border: none;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s ease;
-        }
-
-        .pomo-ctrl-btn.primary {
-            padding: 14px 38px;
-            background: linear-gradient(to right, var(--accent-primary), var(--accent-secondary));
-            color: white;
-            border-radius: 999px;
-            font-size: 16px;
-            font-weight: 700;
-            gap: 10px;
-            box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
-            min-width: 140px;
-        }
-
-        .pomo-ctrl-btn.secondary {
-            width: 48px;
-            height: 48px;
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            color: var(--text-sub);
-            border-radius: 50%;
-            font-size: 16px;
-        }
-
-        .pomo-ctrl-btn.secondary:hover {
-            color: #ffffff;
-            border-color: rgba(255, 255, 255, 0.2);
-        }
-
-        .pomo-active-indicator {
-            position: absolute;
-            top: 2px;
-            right: 2px;
-            width: 9px;
-            height: 9px;
-            border-radius: 50%;
-            background: #22C55E;
-            box-shadow: 0 0 6px #22C55E;
-        }
     </style>
 </head>
 <body>
@@ -913,10 +872,6 @@
             <header>
                 <h1>My Habits</h1>
                 <div style="display: flex; align-items: center; gap: 10px;">
-                    <button class="icon-btn-round bouncy" id="pomodoroHeaderBtn" onclick="openPomodoroModal()" title="Focus Timer" style="position: relative;">
-                        <i class="fa-solid fa-stopwatch"></i>
-                        <span id="pomoActiveDot" class="pomo-active-indicator" style="display: none;"></span>
-                    </button>
                     <button class="icon-btn-round bouncy" onclick="openAccountModal()" title="Account Settings">
                         <i class="fa-solid fa-user"></i>
                     </button>
@@ -936,12 +891,13 @@
     </div>
 
     <!-- MODAL: CREATE / EDIT HABIT -->
-    <div id="formModal" class="modal-overlay">
+    <div id="formModal" class="modal-overlay" onclick="if(event.target===this) closeModal('formModal')">
         <div class="modal-card">
+            <div class="modal-handle-wrap"><div class="modal-handle"></div></div>
             <div class="modal-header">
-                <button onclick="closeModal('formModal')">Cancel</button>
+                <button class="modal-close-btn" onclick="closeModal('formModal')" title="Cancel">Cancel</button>
                 <h2 id="formModalTitle">New Habit</h2>
-                <button onclick="saveHabitForm()">Save</button>
+                <button class="header-text-btn" onclick="saveHabitForm()">Save</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
@@ -963,62 +919,72 @@
     </div>
 
     <!-- MODAL: DETAILS & CALENDAR -->
-    <div id="detailModal" class="modal-overlay">
+    <div id="detailModal" class="modal-overlay" onclick="if(event.target===this) closeModal('detailModal')">
         <div class="modal-card">
+            <div class="modal-handle-wrap"><div class="modal-handle"></div></div>
             <div class="modal-header">
-                <button onclick="closeModal('detailModal')">Close</button>
+                <button class="modal-close-btn" onclick="closeModal('detailModal')" title="Close">Close</button>
                 <h2>Details</h2>
-                <button onclick="openEditModal(selectedHabitForDetail)">Edit</button>
+                <button class="modal-more-btn" id="habitMoreBtn" onclick="openHabitActionSheet()" title="More">
+                    <i class="fa-solid fa-ellipsis"></i>
+                </button>
             </div>
             <div class="modal-body" id="detailModalContent"></div>
         </div>
     </div>
 
     <!-- MODAL: ACCOUNT SETTINGS -->
-    <div id="accountModal" class="modal-overlay">
+    <div id="accountModal" class="modal-overlay" onclick="if(event.target===this) closeModal('accountModal')">
         <div class="modal-card">
+            <div class="modal-handle-wrap"><div class="modal-handle"></div></div>
             <div class="modal-header">
-                <button onclick="closeModal('accountModal')">Cancel</button>
+                <button class="modal-close-btn" onclick="closeModal('accountModal')" title="Cancel">Cancel</button>
                 <h2>Account Settings</h2>
-                <div></div>
+                <div style="width: 30px;"></div>
             </div>
             <div class="modal-body">
-                
-                <!-- E-Mail ändern -->
-                <div class="form-group">
-                    <span class="form-label">NEW EMAIL</span>
-                    <input type="email" id="updateEmailInput" class="form-input" placeholder="new@email.com">
-                    <button class="btn-primary bouncy" onclick="handleUpdateEmail()">Update Email</button>
+
+                <span class="settings-section-label">Email</span>
+                <div class="settings-group">
+                    <div class="settings-row">
+                        <div class="settings-row-icon" style="background: var(--accent-primary);"><i class="fa-solid fa-envelope"></i></div>
+                        <div class="settings-row-body">
+                            <span class="settings-row-label">NEW EMAIL</span>
+                            <input type="email" id="updateEmailInput" class="form-input" placeholder="new@email.com">
+                        </div>
+                    </div>
+                    <button class="settings-row settings-action-row" onclick="handleUpdateEmail()" style="justify-content: flex-start;">
+                        <span>Update Email</span>
+                    </button>
                 </div>
 
-                <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 4px 0;">
-
-                <!-- Passwort ändern -->
-                <div class="form-group">
-                    <span class="form-label">NEW PASSWORD</span>
-                    <input type="password" id="updatePasswordInput" class="form-input" placeholder="Min. 6 characters">
-                    <button class="btn-primary bouncy" onclick="handleUpdatePassword()">Update Password</button>
+                <span class="settings-section-label">Password</span>
+                <div class="settings-group">
+                    <div class="settings-row">
+                        <div class="settings-row-icon" style="background: var(--accent-secondary);"><i class="fa-solid fa-lock"></i></div>
+                        <div class="settings-row-body">
+                            <span class="settings-row-label">NEW PASSWORD</span>
+                            <input type="password" id="updatePasswordInput" class="form-input" placeholder="Min. 6 characters">
+                        </div>
+                    </div>
+                    <button class="settings-row settings-action-row" onclick="handleUpdatePassword()" style="justify-content: flex-start;">
+                        <span>Update Password</span>
+                    </button>
                 </div>
 
                 <div id="accountMsg" class="auth-message"></div>
 
-                <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 4px 0;">
-
-                <!-- Abmelden / Logout -->
-                <div class="form-group">
-                    <span class="form-label">SESSION</span>
-                    <button class="btn-primary bouncy" onclick="closeModal('accountModal'); handleLogout();" style="background: var(--bg-card); border: 1px solid var(--border-color); color: #ffffff; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 0;">
-                        <i class="fa-solid fa-right-from-bracket"></i> Logout
+                <div class="settings-group">
+                    <button class="settings-row settings-action-row" onclick="closeModal('accountModal'); handleLogout();">
+                        <span><i class="fa-solid fa-right-from-bracket" style="width: 20px;"></i> Logout</span>
+                        <i class="fa-solid fa-chevron-right" style="color: var(--text-muted); font-size: 12px;"></i>
                     </button>
                 </div>
 
-                <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 4px 0;">
-
-                <!-- Account / Daten löschen -->
-                <div class="form-group">
-                    <span class="form-label" style="color: #EF4444;">DANGER ZONE</span>
-                    <button class="delete-btn-full bouncy" onclick="handleDeleteAccount()">
-                        <i class="fa-solid fa-user-xmark"></i> Delete Account Data
+                <span class="settings-section-label" style="color: #EF4444;">Danger Zone</span>
+                <div class="settings-group">
+                    <button class="settings-row settings-action-row destructive" onclick="handleDeleteAccount()">
+                        <span><i class="fa-solid fa-user-xmark" style="width: 20px;"></i> Delete Account Data</span>
                     </button>
                 </div>
 
@@ -1026,63 +992,11 @@
         </div>
     </div>
 
-    <!-- MODAL: POMODORO FOCUS TIMER -->
-    <div id="pomodoroModal" class="modal-overlay">
-        <div class="modal-card">
-            <div class="modal-header">
-                <button onclick="closeModal('pomodoroModal')">Close</button>
-                <h2>Focus Timer</h2>
-                <div style="width: 48px;"></div>
-            </div>
-            <div class="modal-body" style="align-items: center; text-align: center; gap: 14px; padding: 10px 18px 24px 18px;">
-                
-                <!-- Mode Switcher Tabs -->
-                <div class="pomo-tabs">
-                    <button class="pomo-tab-btn active" id="pomoTabFocus" onclick="switchPomodoroMode('focus')">Focus</button>
-                    <button class="pomo-tab-btn" id="pomoTabShort" onclick="switchPomodoroMode('shortBreak')">Short Break</button>
-                    <button class="pomo-tab-btn" id="pomoTabLong" onclick="switchPomodoroMode('longBreak')">Long Break</button>
-                </div>
-
-                <!-- Timer Circular Display -->
-                <div class="pomo-circle-wrap">
-                    <svg class="pomo-svg" viewBox="0 0 240 240">
-                        <circle class="pomo-circle-bg" cx="120" cy="120" r="94" />
-                        <circle class="pomo-circle-progress" id="pomoProgressCircle" cx="120" cy="120" r="94" />
-                    </svg>
-                    <div class="pomo-time-container">
-                        <div class="pomo-mode-badge" id="pomoModeBadge">Focus</div>
-                        <div class="pomo-time-display" id="pomoTimeDisplay">25:00</div>
-                        <div class="pomo-round-indicator" id="pomoRoundIndicator">Round 1 of 4</div>
-                    </div>
-                </div>
-
-                <!-- Direct Inline Time Adjuster -->
-                <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%;">
-                    <div class="pomo-stepper-wrap">
-                        <button class="pomo-step-btn bouncy" onclick="adjustPomoMinutes(-5)" title="Subtract 5 minutes">
-                            <i class="fa-solid fa-minus"></i>
-                        </button>
-                        <span class="pomo-duration-text" id="pomoDurationText">25 min</span>
-                        <button class="pomo-step-btn bouncy" onclick="adjustPomoMinutes(5)" title="Add 5 minutes">
-                            <i class="fa-solid fa-plus"></i>
-                        </button>
-                    </div>
-                    <div class="pomo-presets-row" id="pomoPresetsRow"></div>
-                </div>
-
-                <!-- Main Action Buttons -->
-                <div class="pomo-controls">
-                    <button class="pomo-ctrl-btn secondary bouncy" onclick="resetPomodoroTimer()" title="Reset">
-                        <i class="fa-solid fa-rotate-left"></i>
-                    </button>
-                    <button class="pomo-ctrl-btn primary bouncy" id="pomoPlayPauseBtn" onclick="togglePomodoroPlay()">
-                        <i class="fa-solid fa-play" id="pomoPlayIcon"></i>
-                        <span id="pomoPlayText">Start</span>
-                    </button>
-                </div>
-
-            </div>
-        </div>
+    <!-- CONTEXT MENU: EDIT / DELETE HABIT — appears anchored at the "..." button -->
+    <div id="habitMenuBackdrop" class="habit-menu-backdrop" onclick="closeActionSheet()"></div>
+    <div id="habitMenuPopover" class="habit-menu-popover">
+        <button class="habit-menu-item" onclick="actionSheetEdit()"><span>Edit</span><i class="fa-solid fa-pen"></i></button>
+        <button class="habit-menu-item destructive" onclick="actionSheetDelete()"><span>Delete</span><i class="fa-solid fa-trash"></i></button>
     </div>
 
     <script>
@@ -1091,6 +1005,13 @@
         const SUPABASE_ANON_KEY = "sb_publishable_EL6J2YmuJGZMhrmeSfOyWQ_wlUvTc2N";
         
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Light haptic feedback wrapper (no-op on devices/browsers without support)
+        function haptic(pattern = 10) {
+            try {
+                if (navigator.vibrate) navigator.vibrate(pattern);
+            } catch (e) {}
+        }
 
         const iconMapping = {
             "drop.fill": "fa-droplet",
@@ -1346,6 +1267,7 @@
             const target = getStartOfDay(date);
             if (target > today) return;
 
+            haptic(10);
             const dateStr = formatDateKey(date);
             if (!completions[habitId]) {
                 completions[habitId] = new Set();
@@ -1432,7 +1354,8 @@
                     
                     const timer = setTimeout(() => {
                         card.classList.add("dragging");
-                        
+                        haptic(15);
+
                         clone = card.cloneNode(true);
                         clone.style.position = "fixed";
                         clone.style.width = card.offsetWidth + "px";
@@ -1471,6 +1394,7 @@
                         } else {
                             container.insertBefore(card, targetCard);
                         }
+                        haptic(8);
                     }
                 }, { passive: false });
 
@@ -1478,6 +1402,7 @@
                     clearTimeout(card.dataset.touchTimer);
                     if (card.classList.contains("dragging")) {
                         card.classList.remove("dragging");
+                        haptic(15);
                         if (clone) {
                             clone.remove();
                             clone = null;
@@ -1605,6 +1530,71 @@
         function closeModal(id) {
             document.getElementById(id).classList.remove("active");
         }
+
+        /* ===== SWIPE-DOWN-TO-DISMISS for iOS-style sheet modals =====
+           Works from anywhere on the card (like native iOS), but only takes
+           over from scrolling once the inner content is scrolled to the top —
+           otherwise a downward drag just scrolls the content normally. */
+        function setupSwipeToDismiss(overlayId) {
+            const overlay = document.getElementById(overlayId);
+            const card = overlay.querySelector(".modal-card");
+            const body = overlay.querySelector(".modal-body");
+            if (!card) return;
+
+            let startY = 0;
+            let currentY = 0;
+            let tracking = false;
+            let dragging = false;
+            const DISMISS_THRESHOLD = 110;
+
+            function onStart(e) {
+                if (e.target.closest('button') || e.target.closest('input')) {
+                    tracking = false;
+                    return;
+                }
+                startY = e.touches[0].clientY;
+                currentY = startY;
+                tracking = true;
+                dragging = false;
+            }
+
+            function onMove(e) {
+                if (!tracking) return;
+                currentY = e.touches[0].clientY;
+                const diff = currentY - startY;
+
+                if (diff <= 0) return; // only care about downward drags
+                if (body && body.scrollTop > 0) return; // content not scrolled to top yet — let it scroll
+
+                dragging = true;
+                card.classList.add("dragging-sheet");
+                card.style.transform = `translateY(${diff}px)`;
+                e.preventDefault();
+            }
+
+            function onEnd() {
+                if (dragging) {
+                    card.classList.remove("dragging-sheet");
+                    const diff = Math.max(0, currentY - startY);
+                    if (diff > DISMISS_THRESHOLD) {
+                        haptic(12);
+                        card.style.transform = "";
+                        closeModal(overlayId);
+                    } else {
+                        card.style.transform = "";
+                    }
+                }
+                tracking = false;
+                dragging = false;
+            }
+
+            card.addEventListener("touchstart", onStart, { passive: true });
+            card.addEventListener("touchmove", onMove, { passive: false });
+            card.addEventListener("touchend", onEnd);
+            card.addEventListener("touchcancel", onEnd);
+        }
+
+        ["formModal", "detailModal", "accountModal"].forEach(setupSwipeToDismiss);
 
         function openAddModal() {
             selectedHabitForEdit = null;
@@ -1734,10 +1724,6 @@
                 </div>
 
                 ${renderCalendarHTML(habit)}
-
-                <button class="delete-btn-full bouncy" onclick="deleteHabit('${habit.id}')">
-                    <i class="fa-solid fa-trash"></i> Delete Habit
-                </button>
             `;
 
             content.innerHTML = html;
@@ -1824,6 +1810,37 @@
                 renderHabitList();
                 closeModal("detailModal");
             }
+        }
+
+        /* ===== CONTEXT MENU: EDIT / DELETE HABIT (anchored to the "..." button, iOS style) ===== */
+        function openHabitActionSheet() {
+            if (!selectedHabitForDetail) return;
+            haptic(10);
+
+            const btn = document.getElementById("habitMoreBtn");
+            const rect = btn.getBoundingClientRect();
+            const popover = document.getElementById("habitMenuPopover");
+
+            popover.style.top = (rect.bottom + 8) + "px";
+            popover.style.right = (window.innerWidth - rect.right) + "px";
+
+            popover.classList.add("active");
+            document.getElementById("habitMenuBackdrop").classList.add("active");
+        }
+
+        function closeActionSheet() {
+            document.getElementById("habitMenuPopover").classList.remove("active");
+            document.getElementById("habitMenuBackdrop").classList.remove("active");
+        }
+
+        function actionSheetEdit() {
+            closeActionSheet();
+            openEditModal(selectedHabitForDetail);
+        }
+
+        function actionSheetDelete() {
+            closeActionSheet();
+            deleteHabit(selectedHabitForDetail.id);
         }
 
         /* ACCOUNT SETTINGS LOGIC */
@@ -1918,291 +1935,6 @@
                 .replace(/'/g, "&#039;");
         }
 
-        /* ================= POMODORO FOCUS TIMER LOGIC ================= */
-        const POMO_CIRCLE_CIRCUMFERENCE = 590.62; // 2 * PI * 94
-        
-        let pomoDurations = {
-            focus: 25,
-            shortBreak: 5,
-            longBreak: 15
-        };
-
-        const POMO_PRESETS = {
-            focus: [15, 25, 45, 60],
-            shortBreak: [5, 10, 15, 20],
-            longBreak: [10, 15, 20, 30]
-        };
-
-        let currentPomoMode = 'focus'; // 'focus' | 'shortBreak' | 'longBreak'
-        let pomoRound = 1;
-        let pomoTimeRemaining = 25 * 60;
-        let pomoTotalTime = 25 * 60;
-        let pomoIsRunning = false;
-        let pomoIntervalId = null;
-        let pomoTargetEndTime = null;
-        let pomoAudioCtx = null;
-
-        function getPomodoroAudioContext() {
-            if (!pomoAudioCtx) {
-                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-                if (AudioContextClass) {
-                    pomoAudioCtx = new AudioContextClass();
-                }
-            }
-            if (pomoAudioCtx && pomoAudioCtx.state === 'suspended') {
-                pomoAudioCtx.resume();
-            }
-            return pomoAudioCtx;
-        }
-
-        function playEndChime(isTest = false) {
-            try {
-                const ctx = getPomodoroAudioContext();
-                if (!ctx) return;
-
-                const now = ctx.currentTime;
-                // Harmonic 3-note chime: E5 (659Hz) -> G#5 (830Hz) -> B5 (987Hz)
-                const notes = [
-                    { freq: 659.25, time: 0.00, dur: 0.40 },
-                    { freq: 830.61, time: 0.18, dur: 0.45 },
-                    { freq: 987.77, time: 0.36, dur: 0.85 }
-                ];
-
-                notes.forEach(note => {
-                    const osc = ctx.createOscillator();
-                    const gain = ctx.createGain();
-
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(note.freq, now + note.time);
-
-                    gain.gain.setValueAtTime(0.0001, now + note.time);
-                    gain.gain.exponentialRampToValueAtTime(0.35, now + note.time + 0.03);
-                    gain.gain.exponentialRampToValueAtTime(0.0001, now + note.time + note.dur);
-
-                    osc.connect(gain);
-                    gain.connect(ctx.destination);
-
-                    osc.start(now + note.time);
-                    osc.stop(now + note.time + note.dur);
-                });
-            } catch (e) {
-                console.warn("Could not play timer sound:", e);
-            }
-        }
-
-        function initPomodoroState() {
-            try {
-                const savedDurations = localStorage.getItem('pomodoro_durations');
-                if (savedDurations) {
-                    const parsed = JSON.parse(savedDurations);
-                    if (parsed.focus && parsed.shortBreak && parsed.longBreak) {
-                        pomoDurations = parsed;
-                    }
-                }
-                const savedRound = localStorage.getItem('pomodoro_round');
-                if (savedRound) {
-                    pomoRound = parseInt(savedRound) || 1;
-                }
-            } catch (e) {
-                console.warn("Failed to load pomodoro config:", e);
-            }
-
-            pomoTotalTime = (pomoDurations.focus || 25) * 60;
-            pomoTimeRemaining = pomoTotalTime;
-            renderPomoPresets();
-            updatePomodoroDisplay();
-        }
-
-        function openPomodoroModal() {
-            getPomodoroAudioContext();
-            renderPomoPresets();
-            updatePomodoroDisplay();
-            openModal('pomodoroModal');
-        }
-
-        function switchPomodoroMode(mode) {
-            currentPomoMode = mode;
-            if (pomoIsRunning) {
-                pausePomodoroTimer();
-            }
-
-            document.querySelectorAll('.pomo-tab-btn').forEach(btn => btn.classList.remove('active'));
-            const tabId = mode === 'focus' ? 'pomoTabFocus' : (mode === 'shortBreak' ? 'pomoTabShort' : 'pomoTabLong');
-            const activeBtn = document.getElementById(tabId);
-            if (activeBtn) activeBtn.classList.add('active');
-
-            const progressCircle = document.getElementById('pomoProgressCircle');
-            const modeBadge = document.getElementById('pomoModeBadge');
-
-            if (mode === 'focus') {
-                pomoTotalTime = (pomoDurations.focus || 25) * 60;
-                modeBadge.innerText = 'Focus';
-                modeBadge.style.color = 'var(--accent-primary)';
-                if (progressCircle) progressCircle.style.stroke = 'var(--accent-primary)';
-            } else if (mode === 'shortBreak') {
-                pomoTotalTime = (pomoDurations.shortBreak || 5) * 60;
-                modeBadge.innerText = 'Short Break';
-                modeBadge.style.color = '#7BC896';
-                if (progressCircle) progressCircle.style.stroke = '#7BC896';
-            } else {
-                pomoTotalTime = (pomoDurations.longBreak || 15) * 60;
-                modeBadge.innerText = 'Long Break';
-                modeBadge.style.color = '#6CB8E6';
-                if (progressCircle) progressCircle.style.stroke = '#6CB8E6';
-            }
-
-            pomoTimeRemaining = pomoTotalTime;
-            renderPomoPresets();
-            updatePomodoroDisplay();
-        }
-
-        function renderPomoPresets() {
-            const container = document.getElementById('pomoPresetsRow');
-            if (!container) return;
-            const presets = POMO_PRESETS[currentPomoMode] || [15, 25, 45, 60];
-            const currentMins = pomoDurations[currentPomoMode];
-
-            container.innerHTML = presets.map(mins => `
-                <button class="pomo-preset-chip bouncy ${mins === currentMins ? 'active' : ''}" onclick="setPomoMinutes(${mins})">
-                    ${mins}m
-                </button>
-            `).join('');
-        }
-
-        function setPomoMinutes(mins) {
-            mins = Math.max(1, Math.min(120, mins));
-            pomoDurations[currentPomoMode] = mins;
-            try {
-                localStorage.setItem('pomodoro_durations', JSON.stringify(pomoDurations));
-            } catch (e) {}
-
-            pomoTotalTime = mins * 60;
-            if (!pomoIsRunning) {
-                pomoTimeRemaining = pomoTotalTime;
-            }
-            renderPomoPresets();
-            updatePomodoroDisplay();
-        }
-
-        function adjustPomoMinutes(delta) {
-            let current = pomoDurations[currentPomoMode];
-            let next = current + delta;
-            if (next < 1) next = 1;
-            if (currentPomoMode === 'focus' && next > 120) next = 120;
-            if (currentPomoMode === 'shortBreak' && next > 60) next = 60;
-            if (currentPomoMode === 'longBreak' && next > 90) next = 90;
-
-            setPomoMinutes(next);
-        }
-
-        function togglePomodoroPlay() {
-            getPomodoroAudioContext();
-            if (pomoIsRunning) {
-                pausePomodoroTimer();
-            } else {
-                startPomodoroTimer();
-            }
-        }
-
-        function startPomodoroTimer() {
-            if (pomoTimeRemaining <= 0) {
-                pomoTimeRemaining = pomoTotalTime;
-            }
-            pomoIsRunning = true;
-            pomoTargetEndTime = Date.now() + (pomoTimeRemaining * 1000);
-
-            document.getElementById('pomoPlayIcon').className = 'fa-solid fa-pause';
-            document.getElementById('pomoPlayText').innerText = 'Pause';
-            document.getElementById('pomoActiveDot').style.display = 'block';
-
-            if (pomoIntervalId) clearInterval(pomoIntervalId);
-            pomoIntervalId = setInterval(pomoTick, 250);
-        }
-
-        function pausePomodoroTimer() {
-            pomoIsRunning = false;
-            if (pomoIntervalId) {
-                clearInterval(pomoIntervalId);
-                pomoIntervalId = null;
-            }
-            document.getElementById('pomoPlayIcon').className = 'fa-solid fa-play';
-            document.getElementById('pomoPlayText').innerText = 'Start';
-            document.getElementById('pomoActiveDot').style.display = 'none';
-        }
-
-        function pomoTick() {
-            if (!pomoIsRunning || !pomoTargetEndTime) return;
-
-            const now = Date.now();
-            const diffSeconds = Math.max(0, Math.round((pomoTargetEndTime - now) / 1000));
-            pomoTimeRemaining = diffSeconds;
-            updatePomodoroDisplay();
-
-            if (diffSeconds <= 0) {
-                pausePomodoroTimer();
-                playEndChime();
-
-                // Advance to next session
-                if (currentPomoMode === 'focus') {
-                    if (pomoRound >= 4) {
-                        pomoRound = 1;
-                        switchPomodoroMode('longBreak');
-                    } else {
-                        pomoRound++;
-                        switchPomodoroMode('shortBreak');
-                    }
-                } else {
-                    switchPomodoroMode('focus');
-                }
-
-                try {
-                    localStorage.setItem('pomodoro_round', pomoRound.toString());
-                } catch (e) {}
-
-                updatePomodoroDisplay();
-            }
-        }
-
-        function resetPomodoroTimer() {
-            pausePomodoroTimer();
-            pomoTimeRemaining = pomoTotalTime;
-            updatePomodoroDisplay();
-        }
-
-        function updatePomodoroDisplay() {
-            const minutes = Math.floor(pomoTimeRemaining / 60);
-            const seconds = pomoTimeRemaining % 60;
-            const timeStr = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-
-            const timeDisplay = document.getElementById('pomoTimeDisplay');
-            if (timeDisplay) timeDisplay.innerText = timeStr;
-
-            const durationText = document.getElementById('pomoDurationText');
-            if (durationText) {
-                durationText.innerText = `${pomoDurations[currentPomoMode]} min`;
-            }
-
-            const roundIndicator = document.getElementById('pomoRoundIndicator');
-            if (roundIndicator) {
-                if (currentPomoMode === 'focus') {
-                    roundIndicator.innerText = `Round ${pomoRound} of 4`;
-                    roundIndicator.style.visibility = 'visible';
-                } else {
-                    // No subtitle text during breaks as requested, preserved layout space
-                    roundIndicator.innerText = '';
-                    roundIndicator.style.visibility = 'hidden';
-                }
-            }
-
-            const progressCircle = document.getElementById('pomoProgressCircle');
-            if (progressCircle && pomoTotalTime > 0) {
-                const fraction = pomoTimeRemaining / pomoTotalTime;
-                const offset = POMO_CIRCLE_CIRCUMFERENCE * (1 - fraction);
-                progressCircle.style.strokeDashoffset = offset;
-            }
-        }
-
-        initPomodoroState();
         initApp();
     </script>
 </body>
