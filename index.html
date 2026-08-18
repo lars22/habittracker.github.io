@@ -200,7 +200,11 @@
             cursor: grab;
             transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease, background-color 0.2s ease;
             width: 100%;
-            touch-action: none;
+            /* Allow native vertical scrolling by default. The long-press timer in
+               JS decides whether a touch becomes a reorder-drag; only then do we
+               call preventDefault() to take over — this alone must not block
+               normal scrolling, or the whole list becomes unscrollable. */
+            touch-action: pan-y;
         }
 
         .habit-card:active {
@@ -1382,41 +1386,14 @@
 
                 // --- TOUCH / MOBILE DRAG & DROP ---
                 let touchStartY = 0;
-                let initialCardTop = 0;
                 let clone = null;
+                let dragActive = false;
 
-                card.addEventListener("touchstart", (e) => {
-                    if (e.target.closest('button')) return;
-                    touchStartY = e.touches[0].clientY;
-                    
-                    const timer = setTimeout(() => {
-                        clone = card.cloneNode(true);
-                        card.classList.add("dragging");
-                        haptic(15);
-
-                        clone.classList.remove("dragging");
-                        clone.classList.add("dragging-clone");
-                        clone.style.position = "fixed";
-                        clone.style.width = card.offsetWidth + "px";
-                        clone.style.left = card.getBoundingClientRect().left + "px";
-                        clone.style.top = card.getBoundingClientRect().top + "px";
-                        clone.style.margin = "0";
-                        clone.style.zIndex = "9999";
-                        clone.style.pointerEvents = "none";
-                        clone.style.willChange = "transform";
-                        clone.style.backfaceVisibility = "hidden";
-                        clone.style.transform = "translate3d(0, 0, 0) scale(1.02)";
-                        document.body.appendChild(clone);
-                    }, 200);
-
-                    card.dataset.touchTimer = timer;
-                }, { passive: true });
-
-                card.addEventListener("touchmove", (e) => {
-                    if (!card.classList.contains("dragging")) {
-                        clearTimeout(card.dataset.touchTimer);
-                        return;
-                    }
+                // This handler stays passive at all times so ordinary scrolling is never
+                // blocked or slowed down by it — its only job is to cancel the long-press
+                // timer once real finger movement shows the user just wants to scroll.
+                function handleActiveDragMove(e) {
+                    if (!dragActive) return;
                     e.preventDefault();
 
                     const currentY = e.touches[0].clientY;
@@ -1444,11 +1421,15 @@
                             haptic(8);
                         }
                     }
-                }, { passive: false });
+                }
 
-                card.addEventListener("touchend", () => {
-                    clearTimeout(card.dataset.touchTimer);
-                    if (card.classList.contains("dragging")) {
+                function endActiveDrag() {
+                    document.removeEventListener("touchmove", handleActiveDragMove, { passive: false });
+                    document.removeEventListener("touchend", endActiveDrag);
+                    document.removeEventListener("touchcancel", endActiveDrag);
+
+                    if (dragActive) {
+                        dragActive = false;
                         card.classList.remove("dragging");
                         haptic(15);
                         if (clone) {
@@ -1458,7 +1439,54 @@
                         updateLocalHabitsOrderFromDOM();
                         saveNewHabitOrder();
                     }
-                });
+                }
+
+                card.addEventListener("touchstart", (e) => {
+                    if (e.target.closest('button')) return;
+                    touchStartY = e.touches[0].clientY;
+
+                    const timer = setTimeout(() => {
+                        dragActive = true;
+                        clone = card.cloneNode(true);
+                        card.classList.add("dragging");
+                        haptic(15);
+
+                        clone.classList.remove("dragging");
+                        clone.classList.add("dragging-clone");
+                        clone.style.position = "fixed";
+                        clone.style.width = card.offsetWidth + "px";
+                        clone.style.left = card.getBoundingClientRect().left + "px";
+                        clone.style.top = card.getBoundingClientRect().top + "px";
+                        clone.style.margin = "0";
+                        clone.style.zIndex = "9999";
+                        clone.style.pointerEvents = "none";
+                        clone.style.willChange = "transform";
+                        clone.style.backfaceVisibility = "hidden";
+                        clone.style.transform = "translate3d(0, 0, 0) scale(1.02)";
+                        document.body.appendChild(clone);
+
+                        // Only NOW — once we know this is really a drag, not a scroll —
+                        // attach the blocking listener, and only on document (not every
+                        // card), so normal scrolling elsewhere is never affected by it.
+                        document.addEventListener("touchmove", handleActiveDragMove, { passive: false });
+                        document.addEventListener("touchend", endActiveDrag);
+                        document.addEventListener("touchcancel", endActiveDrag);
+                    }, 200);
+
+                    card.dataset.touchTimer = timer;
+                }, { passive: true });
+
+                // Passive-only: cancels the long-press timer if the finger moves before
+                // it fires, so a normal swipe-to-scroll never gets hijacked into a drag.
+                card.addEventListener("touchmove", () => {
+                    if (!dragActive) {
+                        clearTimeout(card.dataset.touchTimer);
+                    }
+                }, { passive: true });
+
+                card.addEventListener("touchend", () => {
+                    clearTimeout(card.dataset.touchTimer);
+                }, { passive: true });
 
                 const faIcon = iconMapping[habit.icon] || "fa-star";
                 const streak = currentStreak(habit.id);
