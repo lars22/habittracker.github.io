@@ -1023,6 +1023,27 @@
             color: #EF4444;
         }
 
+        /* ===== Offline banner ===== */
+        .offline-banner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: calc(env(safe-area-inset-top, 0px) + 10px) 16px 10px 16px;
+            background: #B45309;
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: 600;
+            text-align: center;
+            z-index: 500;
+            transform: translateY(-100%);
+            transition: transform 0.25s ease;
+        }
+
+        .offline-banner.active {
+            transform: translateY(0);
+        }
+
     </style>
 </head>
 <body>
@@ -1199,6 +1220,9 @@
     <!-- TOAST CONTAINER (undo delete, etc.) -->
     <div id="toastContainer" class="toast-container"></div>
 
+    <!-- OFFLINE BANNER -->
+    <div id="offlineBanner" class="offline-banner"></div>
+
     <script>
         // SUPABASE CONFIGURATION
         const SUPABASE_URL = "https://ntkmtlpzjpldpnocuyol.supabase.co";
@@ -1274,12 +1298,163 @@
         let formColor = vibrantPastels[0];
         let formIcon = availableIcons[0];
         let isRegisterMode = true;
+        let currentUser = null;
+
+        /* ===== OFFLINE CACHE + SYNC QUEUE =====
+           habits/completions are kept in localStorage so the app can start and
+           be used fully offline. Every write (add/edit/delete habit, toggle a
+           completion, reorder) updates the local state + cache immediately and
+           queues an operation; the queue is replayed against Supabase as soon
+           as a connection is available (on load, and on the 'online' event). */
+        const CACHE_KEY = 'habit_tracker_cache_v1';
+        const SYNC_QUEUE_KEY = 'habit_tracker_sync_queue_v1';
+        let isFlushingQueue = false;
+
+        function saveCache() {
+            const serializable = {};
+            Object.keys(completions).forEach(id => { serializable[id] = Array.from(completions[id]); });
+            localStorage.setItem(CACHE_KEY, JSON.stringify({ habits, completions: serializable }));
+        }
+
+        function loadCache() {
+            const raw = localStorage.getItem(CACHE_KEY);
+            if (!raw) return false;
+            try {
+                const parsed = JSON.parse(raw);
+                habits = parsed.habits || [];
+                completions = {};
+                Object.keys(parsed.completions || {}).forEach(id => {
+                    completions[id] = new Set(parsed.completions[id]);
+                });
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        function clearCacheAndQueue() {
+            localStorage.removeItem(CACHE_KEY);
+            localStorage.removeItem(SYNC_QUEUE_KEY);
+        }
+
+        function getSyncQueue() {
+            return JSON.parse(localStorage.getItem(SYNC_QUEUE_KEY) || '[]');
+        }
+
+        function setSyncQueue(q) {
+            localStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(q));
+            updateOfflineBanner();
+        }
+
+        function queueOp(op) {
+            const q = getSyncQueue();
+            q.push(op);
+            setSyncQueue(q);
+            if (navigator.onLine && currentUser) flushSyncQueue();
+        }
+
+        // Removes any queued ops for a habit that was created *and* deleted
+        // while still offline — nothing to sync, the habit never hit the server.
+        function purgeQueueForNeverSyncedHabit(habitId) {
+            const q = getSyncQueue();
+            const hasCreate = q.some(op => op.type === 'create_habit' && op.id === habitId);
+            if (!hasCreate) return false;
+            setSyncQueue(q.filter(op => !('id' in op && op.id === habitId) && !('habit_id' in op && op.habit_id === habitId)));
+            return true;
+        }
+
+        async function flushSyncQueue() {
+            if (isFlushingQueue || !supabaseClient || !currentUser || !navigator.onLine) return;
+            isFlushingQueue = true;
+            try {
+                let q = getSyncQueue();
+                while (q.length > 0) {
+                    const op = q[0];
+                    try {
+                        await applySyncOp(op);
+                    } catch (err) {
+                        console.error('Sync op failed, will retry later:', op, err);
+                        break; // stop here, keep this + remaining ops queued for next attempt
+                    }
+                    q = q.slice(1);
+                    setSyncQueue(q);
+                }
+            } finally {
+                isFlushingQueue = false;
+            }
+        }
+
+        async function applySyncOp(op) {
+            switch (op.type) {
+                case 'create_habit': {
+                    const { error } = await supabaseClient.from('habits').insert([{
+                        id: op.id,
+                        name: op.name,
+                        icon: op.icon,
+                        color_hex: op.color_hex,
+                        position: op.position
+                    }]);
+                    if (error) throw error;
+                    break;
+                }
+                case 'update_habit': {
+                    const { error } = await supabaseClient.from('habits').update(op.fields).eq('id', op.id);
+                    if (error) throw error;
+                    break;
+                }
+                case 'update_position': {
+                    const { error } = await supabaseClient.from('habits').update({ position: op.position }).eq('id', op.id);
+                    if (error) throw error;
+                    break;
+                }
+                case 'delete_habit': {
+                    await supabaseClient.from('completions').delete().eq('habit_id', op.id);
+                    const { error } = await supabaseClient.from('habits').delete().eq('id', op.id);
+                    if (error) throw error;
+                    break;
+                }
+                case 'add_completion': {
+                    const { error } = await supabaseClient.from('completions')
+                        .insert({ habit_id: op.habit_id, completed_date: op.completed_date });
+                    if (error) throw error;
+                    break;
+                }
+                case 'remove_completion': {
+                    const { error } = await supabaseClient.from('completions')
+                        .delete().eq('habit_id', op.habit_id).eq('completed_date', op.completed_date);
+                    if (error) throw error;
+                    break;
+                }
+            }
+        }
+
+        function updateOfflineBanner() {
+            const banner = document.getElementById('offlineBanner');
+            if (!banner) return;
+            const queueLength = getSyncQueue().length;
+            if (!navigator.onLine) {
+                banner.textContent = queueLength > 0
+                    ? `Offline – ${queueLength} change(s) will sync once you're back online.`
+                    : 'Offline – changes are saved on this device.';
+                banner.classList.add('active');
+            } else if (queueLength > 0) {
+                banner.textContent = 'Syncing pending changes…';
+                banner.classList.add('active');
+            } else {
+                banner.classList.remove('active');
+            }
+        }
+
+        window.addEventListener('online', () => { flushSyncQueue(); updateOfflineBanner(); });
+        window.addEventListener('offline', updateOfflineBanner);
 
         async function initApp() {
             setupFormSelectors();
+            updateOfflineBanner();
 
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (session) {
+                currentUser = session.user;
                 showApp();
             } else {
                 showLogin();
@@ -1334,6 +1509,7 @@
                 } else if (data.user && data.session === null) {
                     showAuthMessage("Registration successful! Please check your email or disable 'Confirm email' in Supabase Dashboard.", false);
                 } else {
+                    currentUser = data.user;
                     showAuthMessage("Account created successfully! Loading app...", false);
                     setTimeout(() => showApp(), 1000);
                 }
@@ -1343,13 +1519,18 @@
                 if (error) {
                     showAuthMessage("Login failed: " + error.message, true);
                 } else {
+                    currentUser = data.user;
                     showApp();
                 }
             }
         }
 
         async function handleLogout() {
-            await supabaseClient.auth.signOut();
+            if (navigator.onLine) await supabaseClient.auth.signOut();
+            currentUser = null;
+            habits = [];
+            completions = {};
+            clearCacheAndQueue();
             showLogin();
         }
 
@@ -1361,10 +1542,21 @@
         async function showApp() {
             document.getElementById("authScreen").style.display = "none";
             document.getElementById("mainScreen").style.display = "block";
+
+            // Render whatever is cached locally immediately, so the app is usable
+            // right away — even fully offline — then refresh from Supabase.
+            if (loadCache()) renderHabitList();
+
+            await flushSyncQueue();
             await loadDataFromSupabase();
         }
 
         async function loadDataFromSupabase() {
+            if (!navigator.onLine) {
+                updateOfflineBanner();
+                return;
+            }
+
             const { data: habitsData, error: habitsErr } = await supabaseClient
                 .from('habits')
                 .select('*')
@@ -1373,16 +1565,17 @@
 
             if (habitsErr) {
                 console.error("Habits Fetch Error:", habitsErr);
-            } else if (habitsData) {
-                habits = habitsData.map(h => ({
-                    id: h.id,
-                    name: h.name,
-                    icon: h.icon || "drop.fill",
-                    colorHex: h.color_hex || "#EE8172",
-                    position: h.position || 0,
-                    createdAt: h.created_at
-                }));
+                return;
             }
+
+            habits = (habitsData || []).map(h => ({
+                id: h.id,
+                name: h.name,
+                icon: h.icon || "drop.fill",
+                colorHex: h.color_hex || "#EE8172",
+                position: h.position || 0,
+                createdAt: h.created_at
+            }));
 
             const { data: compData, error: compErr } = await supabaseClient
                 .from('completions')
@@ -1390,16 +1583,18 @@
 
             if (compErr) {
                 console.error("Completions Fetch Error:", compErr);
-            } else if (compData) {
-                completions = {};
-                compData.forEach(c => {
-                    if (!completions[c.habit_id]) {
-                        completions[c.habit_id] = new Set();
-                    }
-                    completions[c.habit_id].add(c.completed_date);
-                });
+                return;
             }
 
+            completions = {};
+            (compData || []).forEach(c => {
+                if (!completions[c.habit_id]) {
+                    completions[c.habit_id] = new Set();
+                }
+                completions[c.habit_id].add(c.completed_date);
+            });
+
+            saveCache();
             renderHabitList();
         }
 
@@ -1480,18 +1675,14 @@
                 completions[habitId].delete(dateStr);
                 if (isTodayToggle) justToggledHabitId = habitId;
                 renderHabitList();
-                await supabaseClient
-                    .from('completions')
-                    .delete()
-                    .eq('habit_id', habitId)
-                    .eq('completed_date', dateStr);
+                saveCache();
+                queueOp({ type: 'remove_completion', habit_id: habitId, completed_date: dateStr });
             } else {
                 completions[habitId].add(dateStr);
                 if (isTodayToggle) justToggledHabitId = habitId;
                 renderHabitList();
-                await supabaseClient
-                    .from('completions')
-                    .insert({ habit_id: habitId, completed_date: dateStr });
+                saveCache();
+                queueOp({ type: 'add_completion', habit_id: habitId, completed_date: dateStr });
             }
 
             if (selectedHabitForDetail && selectedHabitForDetail.id === habitId) {
@@ -1731,13 +1922,11 @@
 
         async function saveNewHabitOrder() {
             updateLocalHabitsOrderFromDOM();
+            saveCache();
 
-            for (let habit of habits) {
-                await supabaseClient
-                    .from('habits')
-                    .update({ position: habit.position })
-                    .eq('id', habit.id);
-            }
+            habits.forEach(habit => {
+                queueOp({ type: 'update_position', id: habit.id, position: habit.position });
+            });
         }
 
         function setupFormSelectors() {
@@ -1887,48 +2076,36 @@
                     selectedHabitForEdit.colorHex = payloadColor;
                     selectedHabitForEdit.icon = payloadIcon;
 
-                    const { error } = await supabaseClient
-                        .from('habits')
-                        .update({
-                            name: name,
-                            color_hex: payloadColor,
-                            icon: payloadIcon
-                        })
-                        .eq('id', selectedHabitForEdit.id);
-
-                    if (error) {
-                        alert("Update failed: " + error.message);
-                        return;
-                    }
+                    queueOp({
+                        type: 'update_habit',
+                        id: selectedHabitForEdit.id,
+                        fields: { name: name, color_hex: payloadColor, icon: payloadIcon }
+                    });
                 } else {
                     const newPos = habits.length;
-                    const { data, error } = await supabaseClient
-                        .from('habits')
-                        .insert([{
-                            name: name,
-                            icon: payloadIcon,
-                            color_hex: payloadColor,
-                            position: newPos
-                        }])
-                        .select();
+                    const newId = crypto.randomUUID();
+                    const createdAt = new Date().toISOString();
 
-                    if (error) {
-                        alert("Saving failed: " + error.message);
-                        return;
-                    }
+                    habits.push({
+                        id: newId,
+                        name: name,
+                        icon: payloadIcon,
+                        colorHex: payloadColor,
+                        position: newPos,
+                        createdAt: createdAt
+                    });
 
-                    if (data && data[0]) {
-                        habits.push({
-                            id: data[0].id,
-                            name: data[0].name,
-                            icon: data[0].icon,
-                            colorHex: data[0].color_hex,
-                            position: data[0].position,
-                            createdAt: data[0].created_at
-                        });
-                    }
+                    queueOp({
+                        type: 'create_habit',
+                        id: newId,
+                        name: name,
+                        icon: payloadIcon,
+                        color_hex: payloadColor,
+                        position: newPos
+                    });
                 }
 
+                saveCache();
                 renderHabitList();
                 closeModal("formModal");
             } finally {
@@ -2129,13 +2306,17 @@
             habits.splice(index, 1);
             delete completions[habitId];
             renderHabitList();
+            saveCache();
             closeModal("detailModal");
 
             let committed = false;
-            const commitTimer = setTimeout(async () => {
+            const commitTimer = setTimeout(() => {
                 committed = true;
-                await supabaseClient.from('completions').delete().eq('habit_id', habitId);
-                await supabaseClient.from('habits').delete().eq('id', habitId);
+                // If this habit was created while offline and never synced, there's
+                // nothing to delete on the server — just drop the pending ops.
+                if (!purgeQueueForNeverSyncedHabit(habitId)) {
+                    queueOp({ type: 'delete_habit', id: habitId });
+                }
             }, 4000);
 
             showUndoToast(`"${habit.name}" deleted`, () => {
@@ -2144,6 +2325,7 @@
                 habits.splice(index, 0, habit);
                 if (removedCompletions) completions[habitId] = removedCompletions;
                 renderHabitList();
+                saveCache();
             });
         }
 
@@ -2231,8 +2413,13 @@
         }
 
         async function handleDeleteAccount() {
+            if (!navigator.onLine) {
+                alert("You're offline. Connect to the internet to delete your account data.");
+                return;
+            }
+
             const confirmation = confirm("Are you sure you want to delete your account data? All your habits and progress will be permanently lost.");
-            
+
             if (!confirmation) return;
 
             try {
@@ -2268,6 +2455,13 @@
                 .replace(/>/g, "&gt;")
                 .replace(/"/g, "&quot;")
                 .replace(/'/g, "&#039;");
+        }
+
+        // PWA: register the service worker so the app shell starts offline
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').catch(err => console.error('SW registration failed:', err));
+            });
         }
 
         initApp();
