@@ -1432,16 +1432,16 @@
         function updateOfflineBanner() {
             const banner = document.getElementById('offlineBanner');
             if (!banner) return;
-            const queueLength = getSyncQueue().length;
             if (!navigator.onLine) {
+                const queueLength = getSyncQueue().length;
                 banner.textContent = queueLength > 0
                     ? `Offline – ${queueLength} change(s) will sync once you're back online.`
                     : 'Offline – changes are saved on this device.';
                 banner.classList.add('active');
-            } else if (queueLength > 0) {
-                banner.textContent = 'Syncing pending changes…';
-                banner.classList.add('active');
             } else {
+                // While online, syncing happens near-instantly in the background —
+                // surfacing it as a banner on every single toggle just causes a
+                // distracting flash, so only the offline state is shown at all.
                 banner.classList.remove('active');
             }
         }
