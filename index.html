@@ -1190,9 +1190,10 @@
                 <span class="settings-section-label" style="color: #EF4444;">Danger Zone</span>
                 <div class="settings-group">
                     <button class="settings-row settings-action-row destructive" onclick="handleDeleteAccount()">
-                        <span><i class="fa-solid fa-user-xmark" style="width: 20px;"></i> Delete Account Data</span>
+                        <span><i class="fa-solid fa-trash" style="width: 20px;"></i> Delete All Habits &amp; Progress</span>
                     </button>
                 </div>
+                <p style="font-size: 12px; color: var(--text-muted); padding: 0 4px;">This permanently deletes all your habits and completion history. Your login account itself is not deleted — to remove that as well, contact support.</p>
 
             </div>
         </div>
@@ -2418,7 +2419,7 @@
                 return;
             }
 
-            const confirmation = confirm("Are you sure you want to delete your account data? All your habits and progress will be permanently lost.");
+            const confirmation = confirm("Are you sure you want to delete all your habits and progress? This can't be undone. Your login account itself will not be deleted.");
 
             if (!confirmation) return;
 
@@ -2442,7 +2443,7 @@
                 closeModal("accountModal");
                 await handleLogout();
 
-                alert("Your account data has been successfully deleted.");
+                alert("All your habits and progress have been deleted.");
             } catch (err) {
                 alert("An error occurred while deleting your data: " + err.message);
             }
