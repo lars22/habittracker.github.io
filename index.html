@@ -549,8 +549,10 @@
         .modal-card {
             width: 100%;
             max-width: 480px;
-            height: auto;
-            max-height: 88dvh;
+            /* Reach almost to the very top of the screen (a small peek gap, like a
+               native iOS sheet) instead of stopping partway down — independent of
+               how much content is inside. */
+            height: calc(100dvh - env(safe-area-inset-top, 0px) - 12px);
             background: var(--bg-main);
             border-top-left-radius: 24px;
             border-top-right-radius: 24px;
